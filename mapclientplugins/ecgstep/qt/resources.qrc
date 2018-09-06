@@ -1,0 +1,6 @@
+
+<RCC>
+  <qresource prefix="ecgstep">
+    <file>images/Ic_grid_on_48px.svg.png</file>
+  </qresource>
+</RCC>
