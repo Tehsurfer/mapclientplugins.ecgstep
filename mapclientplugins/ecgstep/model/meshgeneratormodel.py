@@ -284,8 +284,9 @@ class MeshGeneratorModel(MeshAlignmentModel):
         spec.setName('eegColourSpectrum')
 
         spcc = spec.getFirstSpectrumcomponent()
-        spcc.setRangeMaximum(1000)
-        spcc.setRangeMinimum(-8000)
+        spcc.setRangeMaximum(1)
+        spcc.setRangeMinimum(0)
+        self._spectrum_component = spcc
 
 
         # Set attributes for our mesh
@@ -343,6 +344,20 @@ class MeshGeneratorModel(MeshAlignmentModel):
         xiAxes.setVisibilityFlag(False)
         self.applyAlignment()
         scene.endChange()
+
+    def initialiseSpectrumFromDictionary(self, data):
+        min = data[next(iter(data))][0]
+        max = min
+        for key in data:
+            row_max = np.max(data[key])
+            row_min = np.min(data[key])
+            if row_min < min:
+                min = row_min
+            if row_max > max:
+                max = row_max
+
+        self._spectrum_component.setRangeMaximum(max)
+        self._spectrum_component.setRangeMinimum(min)
 
     def writeModel(self, file_name):
         self._region.writeFile(file_name)

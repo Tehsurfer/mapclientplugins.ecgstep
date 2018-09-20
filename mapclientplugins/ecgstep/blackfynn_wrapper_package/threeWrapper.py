@@ -43,7 +43,7 @@ class BlackfynnGet:
 
         fpipe = FilePipe()
         fpipe.send(dict)
-        python2_command = 'C:\\Users\jkho021\Projects\\test_space\\blackfynnData\\venv_blackFynnData\Scripts\python.exe' + \
+        python2_command = 'C:\\Users\jkho021\Projects\SPARC\\venv_mapclient\Scripts\python.exe' + \
                           ' C:\\Users\jkho021\Projects\\test_space\\blackfynnData\\blackfynn_call.py'
         process = subprocess.Popen(python2_command.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()

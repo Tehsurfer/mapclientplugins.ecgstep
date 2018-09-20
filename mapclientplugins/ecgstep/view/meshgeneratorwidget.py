@@ -12,7 +12,9 @@ from PySide import QtGui, QtCore
 from functools import partial
 import webbrowser, os
 
+from mapclient.view.utils import set_wait_cursor
 from mapclientplugins.ecgstep.view.ecg_ui import Ui_MeshGeneratorWidget
+from mapclientplugins.ecgstep.view.addprofile import AddProfileDialog
 from mapclientplugins.ecgstep.model.blackfynnMesh import Blackfynn_2d_plate
 from mapclientplugins.ecgstep.blackfynn_wrapper_package.threeWrapper import BlackfynnGet
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
@@ -50,6 +52,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
 
         self.blackfynn = BlackfynnGet()
+        self._blackfynn_data_model = model.getBlackfynnDataModel()
         self._ui.sceneviewer_widget.setContext(model.getContext())
         self._ui.sceneviewer_widget.setModel(self._generator_model)
         self._ui.sceneviewer_widget.initializeGL()
@@ -112,9 +115,14 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.frameIndex_spinBox.valueChanged.connect(self._frameIndexValueChanged)
         self._ui.framesPerSecond_spinBox.valueChanged.connect(self._framesPerSecondValueChanged)
         self._ui.timeLoop_checkBox.clicked.connect(self._timeLoopClicked)
-        self._ui.submitButton.clicked.connect(self._submitClicked)
         self._ui.displayEEGAnimation_checkBox.clicked.connect(self._EEGAnimationClicked)
         self._ui.pushButton.clicked.connect(self._exportWebGLJson)
+        self._ui.addProfile_pushButton.clicked.connect(self._addProfileClicked)
+        self._ui.blackfynnDatasets_pushButton.clicked.connect(self._downloadDatasetsClicked)
+        self._ui.blackfynnTimeSeries_pushButton.clicked.connect(self._downloadTimeSeriesClicked)
+        self._ui.blackfynnDatasets_comboBox.currentIndexChanged.connect(self._blackfynnDatasetsChanged)
+        self._ui.downloadData_button.clicked.connect(self._downloadBlackfynnData)
+        # self._ui.submitButton.clicked.connect(self._submitClicked)
         # self._ui.treeWidgetAnnotation.itemSelectionChanged.connect(self._annotationSelectionChanged)
         # self._ui.treeWidgetAnnotation.itemChanged.connect(self._annotationItemChanged)
 
@@ -179,32 +187,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
             #self.updatePlate(value)
         self._ui.timeValue_doubleSpinBox.blockSignals(False)
 
-    def updateAllNodes(self, time):
-        colours_at_current_time = []
-        for key in self.data['scaled']:
-            colours_at_current_time.append(self.data['scaled'][key][self.currentFrame(time)])
-        self._ecg_graphics.updateEEGnodeColours(colours_at_current_time)
-
-    def updatePlate(self, time):
-        colours_at_current_time = []
-        for key in self.data['scaled']:
-            colours_at_current_time.append(self.data['scaled'][key][self.currentFrame(time)])
-        self.updatePlateColoursTemporary(colours_at_current_time)
-
-    def updatePlateColoursTemporary(self, values):
-        reg = self._generator_model._region.findChildByName('ecg_plane')
-        fm = reg.getFieldmodule()
-        fm.beginChange()
-        cache = fm.createFieldcache()
-        colour = fm.findFieldByName('colour2')
-        colour = colour.castFiniteElement()
-        nodeset = fm.findNodesetByName('nodes')
-        for i in range(10000, 10064):
-            node = nodeset.findNodeByIdentifier(i)
-            cache.setNode(node)
-            colour.setNodeParameters(cache, -1, Node.VALUE_LABEL_VALUE, 1, values[(i % (len(values)-1))])
-        fm.endChange()
-
     def scaleCacheData(self):
         tempDict = {}
         for i, key in enumerate(self.data['cache']):
@@ -250,6 +232,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
             ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
             pm.ECGtimes = ECGtimes.tolist()
             pm.ECGcoloursMatrix = ECGmatrix
+
+            self._generator_model.initialiseSpectrumFromDictionary(self.data['cache'])
 
         pm.generateMesh()
         pm.drawMesh()
@@ -326,6 +310,64 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.scaleCacheData()
         self.initialiseSpectrum(self.data)
 
+    def _addProfileClicked(self):
+        dlg = AddProfileDialog(self, self._blackfynn_data_model.getExistingProfileNames())
+
+        if dlg.exec_():
+            profile = dlg.profile()
+            self._blackfynn_data_model.addProfile(profile)
+            self._refreshBlackfynnOptions()
+
+    @set_wait_cursor
+    def _retrieveDatasets(self):
+        return self._blackfynn_data_model.getDatasets(self._ui.profiles_comboBox.currentText(), refresh=True)
+
+    def _downloadDatasetsClicked(self):
+        datasets = self._retrieveDatasets()
+        self._ui.blackfynnDatasets_comboBox.clear()
+        self._ui.blackfynnDatasets_comboBox.addItems([ds.name for ds in datasets])
+        self._updateBlackfynnUi()
+
+    @set_wait_cursor
+    def _retrieveDataset(self):
+        return self._blackfynn_data_model.getDataset(self._ui.profiles_comboBox.currentText(),
+                                                self._ui.blackfynnDatasets_comboBox.currentText(), refresh=True)
+
+    def _downloadTimeSeriesClicked(self):
+        dataset = self._retrieveDataset()
+        self._ui.blackfynnTimeSeries_comboBox.clear()
+        self._ui.blackfynnTimeSeries_comboBox.addItems([ds.name for ds in dataset])
+        self._updateBlackfynnUi()
+
+    def _downloadBlackfynnData(self):
+        self.data = {}
+        self.data['cache'] = self._blackfynn_data_model.getTimeseriesData(self._ui.profiles_comboBox.currentText(),
+                                                        self._ui.blackfynnDatasets_comboBox.currentText(),
+                                                        self._ui.blackfynnTimeSeries_comboBox.currentText())
+
+    def _updateBlackfynnUi(self):
+        valid_profiles = False
+        if self._ui.profiles_comboBox.count() > 0:
+            valid_profiles = True
+
+        self._ui.blackfynnDatasets_comboBox.setEnabled(valid_profiles)
+        self._ui.blackfynnTimeSeries_comboBox.setEnabled(valid_profiles)
+
+        valid_datasets = False
+        if self._ui.blackfynnDatasets_comboBox.count() > 0:
+            valid_datasets = True
+
+        self._ui.blackfynnTimeSeries_pushButton.setEnabled(valid_datasets)
+        self._ui.blackfynnTimeSeries_pushButton.setEnabled(valid_datasets)
+
+    def _refreshBlackfynnOptions(self):
+        self._ui.profiles_comboBox.clear()
+        self._ui.profiles_comboBox.addItems(self._blackfynn_data_model.getExistingProfileNames())
+        self._updateBlackfynnUi()
+
+    def _blackfynnDatasetsChanged(self, index):
+        print(index)
+
     def updatePlot(self, key):
 
         try:
@@ -344,17 +386,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.pw.setTitle(f'EEG values from {key} (LG{key})')
         self.line = self.pw.addLine(x=self.time,
                                     pen='r')  # show current time
-
-    def EEGSelectionDisplay(self, key):
-        # For selecting EEG (brain) points
-        print(f'key {key} clicked!')
-        if self.data:
-            self.pw.clear()
-            self.pw.plot(self.data['x'], self.data['cache'][f'LG{key}'], pen='b',
-                         title=f'EEG values from {key} (LG{key})',
-                         labels={'left': f'EEG value of node LG{key}', 'bottom': 'time in seconds'})
-            self.line = self.pw.addLine(x=self.time, pen='r')  # show current time
-
 
 
     def _displayImagePlaneClicked(self):
@@ -380,6 +411,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def _refreshOptions(self):
         self._ui.framesPerSecond_spinBox.setValue(self._model.getFramesPerSecond())
         self._ui.timeLoop_checkBox.setChecked(self._model.isTimeLoop())
+        self._refreshBlackfynnOptions()
         self._refreshMeshTypeOptions()
 
     def _deleteElementRangesLineEditChanged(self):
@@ -390,7 +422,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._generator_model.setScaleText(self._ui.scale_lineEdit.text())
         self._ui.scale_lineEdit.setText(self._generator_model.getScaleText())
 
-    def _displayAxesClicked(self):
+    def converNodesToMesh(self):
         self._generator_model.setDisplayAxes(self._ui.displayAxes_checkBox.isChecked())
         # for testing, we delete our ecg nodes and reload the entire mesh
         self._ecg_graphics.deleteAll()

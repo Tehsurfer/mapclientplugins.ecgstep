@@ -7,6 +7,7 @@ from opencmiss.zinc.context import Context
 from opencmiss.zinc.material import Material
 
 from mapclientplugins.ecgstep.model.meshgeneratormodel import MeshGeneratorModel
+from mapclientplugins.ecgstep.model.blackfynndatamodel import BlackfynnDataModel
 from mapclientplugins.meshgeneratorstep.model.blackfynnECGgraphics import EcgGraphics
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
 
@@ -25,6 +26,8 @@ class MasterModel(object):
         self._initialise()
         self._region = self._context.createRegion()
         self._generator_model = MeshGeneratorModel(self._region, self._materialmodule)
+        self._blackfynn_data_model = BlackfynnDataModel()
+
         # self._ecgGraphics = EcgGraphics()
         # self._ecgGraphics.setRegion(self._region)
         self._settings = {
@@ -94,6 +97,9 @@ class MasterModel(object):
     def getGeneratorModel(self):
         return self._generator_model
 
+    def getBlackfynnDataModel(self):
+        return self._blackfynn_data_model
+
     def getEcgGraphics(self):
         return self._ecgGraphics
 
@@ -147,6 +153,7 @@ class MasterModel(object):
     def _getSettings(self):
         settings = self._settings
         settings['generator_settings'] = self._generator_model.getSettings()
+        settings['blackfynn_settings'] = self._blackfynn_data_model.getSettings()
         #settings['ECG_grid'] = self._ecgGraphics.getSettings()
         return settings
 
@@ -158,6 +165,8 @@ class MasterModel(object):
             if not 'generator_settings' in settings:
                 # migrate from old settings before named generator_settings
                 settings = {'generator_settings': settings}
+            if 'blackfynn_settings' not in settings:
+                settings.update({'blackfynn_settings': self._blackfynn_data_model.getSettings()})
         except:
             # no settings saved yet, following gets defaults
             settings = self._getSettings()
@@ -167,7 +176,7 @@ class MasterModel(object):
                 self._ecgGraphics.setSettings(settings['ECG_grid'])
         except KeyError:
             pass
-
+        self._blackfynn_data_model.setSettings(settings['blackfynn_settings'])
 
     def _saveSettings(self):
         settings = self._getSettings()
