@@ -23,7 +23,7 @@ class Blackfynn_2d_plate(object):
         ecg_region = region.findChildByName('ecg_plane')
         if ecg_region.isValid():
             region.removeChild(ecg_region)
-        self.number_points = 64
+
         self._region = region.createChild('ecg_plane')
         self.node_coordinate_list = node_coordinate_list
         self.ECGcoloursMatrix = [[-5000,-4000,-3000],[-5000,-4000,-3000],]
@@ -39,6 +39,7 @@ class Blackfynn_2d_plate(object):
         """
 
         coordinateDimensions = 3
+        self.number_points = len(self.node_coordinate_list)
         elementsCount1 = int(self.number_points**.5 - 1)
         elementsCount2 = int(self.number_points**.5 - 1)
         useCrossDerivatives = 0
