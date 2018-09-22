@@ -5,7 +5,7 @@ The ecg step is a plugin for the MAP Client application that registers ECG data 
 Installation
 ------
 1. *Mapclient installation*: If you have a current version of mapclient running, skip this step. Otherwise follow the instructions 
-[here](https://docs.google.com/document/d/1GbZKzIK-kX86eAWQ0W9t-NmP8woLhHMNZCNhLRES_uE/edit?usp=sharing). The plugins mentioned in the instructions can be ignored but follow everything else
+[here](https://docs.google.com/document/d/1GbZKzIK-kX86eAWQ0W9t-NmP8woLhHMNZCNhLRES_uE/edit?usp=sharing). The plugins mentioned in the instructions can be ignored but all other elements of the installation will be needed.
 
 2. *ecgstep plugin installation*: Navigate to the 'plugins' folder created during the mapclient installation.
 3. Use `git clone https://github.com/Tehsurfer/mapclientplugins.ecgstep.git`
@@ -27,7 +27,7 @@ The input step will need to output a list of 3D coordinates for the step to rend
 
 `coordinate_list = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.1], [0.0, 0.0, 0.2],...]`
 
-Alternatively: You can download the dummy data step I have created.
+Alternatively: You can download the [dummy data step](https://github.com/Tehsurfer/mapclientplugins.dummydatastep) I have created.
 
 
 
