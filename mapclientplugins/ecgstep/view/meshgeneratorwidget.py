@@ -16,7 +16,6 @@ from mapclient.view.utils import set_wait_cursor
 from mapclientplugins.ecgstep.view.ecg_ui import Ui_MeshGeneratorWidget
 from mapclientplugins.ecgstep.view.addprofile import AddProfileDialog
 from mapclientplugins.ecgstep.model.blackfynnMesh import Blackfynn_2d_plate
-from mapclientplugins.ecgstep.blackfynn_wrapper_package.threeWrapper import BlackfynnGet
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
 
 from opencmiss.zinc.node import Node
@@ -51,7 +50,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.node_coordinate_list = port_data
 
 
-        self.blackfynn = BlackfynnGet()
         self._blackfynn_data_model = model.getBlackfynnDataModel()
         self._ui.sceneviewer_widget.setContext(model.getContext())
         self._ui.sceneviewer_widget.setModel(self._generator_model)
@@ -283,28 +281,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def _framesPerSecondValueChanged(self, value):
         self._model.setFramesPerSecond(value)
         self._ui.timeValue_doubleSpinBox.setMaximum(NUMBER_OF_FRAMES/value)
-
-    def _submitClicked(self):
-    # submitClicked initialises all the blackfynn functionality and updates login fields.
-        if self._ui.api_key.displayText() != 'API Key' and self._ui.api_secret.text() != '***************************':
-            self.pw = pg.plot(title='Blackfynn electrode graph',
-                              labels={'left': f'EEG value of node', 'bottom': 'time in seconds'})
-            self._ui.Login_groupBox.setTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Login details saved, click on a node to open graphs", None,
-                                                                       QtGui.QApplication.UnicodeUTF8))
-            self.initialiseBlackfynnData()
-            self._ui.api_secret.setText('***************************')
-            self.blackfynn.loaded = True
-
-
-    def initialiseBlackfynnData(self):
-        # self.blackfynn.api_key = self._ui.api_key.text()  <- commented so that we do not have to enter key each time
-        # self.blackfynn.api_secret = self._ui.api_secret.text()
-        self.blackfynn.set_api_key_login()
-        self.blackfynn.set_params(channels='LG4', window_from_start=16) # need to add dataset selection
-        self.data = self.blackfynn.get()
-        self.updatePlot(4)
-        self.scaleCacheData()
-        self.initialiseSpectrum(self.data)
 
     def _addProfileClicked(self):
         dlg = AddProfileDialog(self, self._blackfynn_data_model.getExistingProfileNames())
