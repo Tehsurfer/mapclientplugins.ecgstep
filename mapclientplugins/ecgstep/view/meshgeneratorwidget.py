@@ -115,7 +115,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.frameIndex_spinBox.valueChanged.connect(self._frameIndexValueChanged)
         self._ui.framesPerSecond_spinBox.valueChanged.connect(self._framesPerSecondValueChanged)
         self._ui.timeLoop_checkBox.clicked.connect(self._timeLoopClicked)
-        self._ui.displayEEGAnimation_checkBox.clicked.connect(self._EEGAnimationClicked)
         self._ui.pushButton.clicked.connect(self._exportWebGLJson)
         self._ui.addProfile_pushButton.clicked.connect(self._addProfileClicked)
         self._ui.blackfynnDatasets_pushButton.clicked.connect(self._downloadDatasetsClicked)
@@ -216,7 +215,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         spectrum_component.setRangeMaximum(maximum)
         spectrum_component.setRangeMinimum(minimum)
 
-    def _EEGAnimationClicked(self):
+    def _renderECGMesh(self):
 
         pm = Blackfynn_2d_plate(self._generator_model._region, self.node_coordinate_list)
 
@@ -344,6 +343,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.data['cache'] = self._blackfynn_data_model.getTimeseriesData(self._ui.profiles_comboBox.currentText(),
                                                         self._ui.blackfynnDatasets_comboBox.currentText(),
                                                         self._ui.blackfynnTimeSeries_comboBox.currentText())
+        self._renderECGMesh()
 
     def _updateBlackfynnUi(self):
         valid_profiles = False
@@ -542,7 +542,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self._ui.sceneviewer_widget._calculatePointOnPlane = None
             self._ui.sceneviewer_widget.mousePressEvent = self._original_mousePressEvent
             if self._ui.sceneviewer_widget.foundNode and len(self._ui.sceneviewer_widget.grid) is 2:
-                #self.updatePlot(self._ui.sceneviewer_widget.nodeKey) # updates plot if a node is clicked
+                self.updatePlot(self._ui.sceneviewer_widget.nodeKey) # updates plot if a node is clicked
                 if self._ui.sceneviewer_widget.nodeKey in self._ecg_graphics.node_corner_list:
                     self._ecg_graphics.updateGrid(self._ui.sceneviewer_widget.nodeKey,  self._ui.sceneviewer_widget.grid[1])
                 self._ui.sceneviewer_widget.foundNode = False
