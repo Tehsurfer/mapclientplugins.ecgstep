@@ -30,8 +30,8 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>390</width>
-       <height>436</height>
+       <width>492</width>
+       <height>557</height>
       </size>
      </property>
      <property name="features">
@@ -76,8 +76,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>366</width>
-            <height>456</height>
+            <width>468</width>
+            <height>427</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -231,7 +231,7 @@
           <string>Blackfynn:</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="0" column="0" colspan="3">
+          <item row="0" column="0" colspan="4">
            <widget class="QGroupBox" name="blackfynnProfiles_groupBox">
             <property name="title">
              <string>Profiles:</string>
@@ -264,7 +264,7 @@
             </layout>
            </widget>
           </item>
-          <item row="1" column="2">
+          <item row="1" column="3">
            <widget class="QPushButton" name="blackfynnDatasets_pushButton">
             <property name="toolTip">
              <string>Retrieve datasets</string>
@@ -285,14 +285,7 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="0">
-           <widget class="QCheckBox" name="displayEEGAnimation_checkBox">
-            <property name="text">
-             <string>Show EEG data in animation</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
+          <item row="4" column="2">
            <widget class="QComboBox" name="blackfynnTimeSeries_comboBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -302,7 +295,7 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
+          <item row="1" column="2">
            <widget class="QComboBox" name="blackfynnDatasets_comboBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -312,14 +305,7 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="1">
-           <widget class="QPushButton" name="pushButton">
-            <property name="text">
-             <string>Export for WebGL</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2">
+          <item row="4" column="3">
            <widget class="QPushButton" name="blackfynnTimeSeries_pushButton">
             <property name="toolTip">
              <string>Retrieve time series</string>
@@ -340,7 +326,21 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="1">
+          <item row="6" column="2">
+           <widget class="QPushButton" name="pushButton">
+            <property name="text">
+             <string>Export for WebGL</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="2">
+           <widget class="QLineEdit" name="exportDirectory_lineEdit">
+            <property name="text">
+             <string>C:\Users\jkho021\Projects\MPB</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2">
            <widget class="QPushButton" name="downloadData_button">
             <property name="text">
              <string>Download Data</string>

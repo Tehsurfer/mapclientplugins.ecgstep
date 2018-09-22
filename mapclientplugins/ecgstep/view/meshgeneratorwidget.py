@@ -487,8 +487,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
             buffer = [resources[i].getBuffer()[1] for i in range(number)]
 
-            heartPath = 'C:\\Users\jkho021\Projects\\alansnew\MPB\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
-            htmlIndexPath = 'C:\\Users\jkho021\Projects\\alansnew\MPB\simple_heart\\index.html'
+            mpbPath = self._ui.exportDirectory_lineEdit.text()
+
+            heartPath = mpbPath + '\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
+            htmlIndexPath = mpbPath + '\simple_heart\\index.html'
             for i, content in enumerate(buffer):
                 if content is None:
                     break
