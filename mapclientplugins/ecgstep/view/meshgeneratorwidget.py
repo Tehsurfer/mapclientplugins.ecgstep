@@ -16,7 +16,6 @@ from mapclient.view.utils import set_wait_cursor
 from mapclientplugins.ecgstep.view.ecg_ui import Ui_MeshGeneratorWidget
 from mapclientplugins.ecgstep.view.addprofile import AddProfileDialog
 from mapclientplugins.ecgstep.model.blackfynnMesh import Blackfynn_2d_plate
-from mapclientplugins.ecgstep.blackfynn_wrapper_package.threeWrapper import BlackfynnGet
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
 
 from opencmiss.zinc.node import Node
@@ -51,7 +50,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.node_coordinate_list = port_data
 
 
-        self.blackfynn = BlackfynnGet()
         self._blackfynn_data_model = model.getBlackfynnDataModel()
         self._ui.sceneviewer_widget.setContext(model.getContext())
         self._ui.sceneviewer_widget.setModel(self._generator_model)
@@ -284,31 +282,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._model.setFramesPerSecond(value)
         self._ui.timeValue_doubleSpinBox.setMaximum(NUMBER_OF_FRAMES/value)
 
-    def _fixImagePlaneClicked(self):
-        self._plane_model.setImagePlaneFixed(self._ui.fixImagePlane_checkBox.isChecked())
-
-    def _submitClicked(self):
-    # submitClicked initialises all the blackfynn functionality and updates login fields.
-        if self._ui.api_key.displayText() != 'API Key' and self._ui.api_secret.text() != '***************************':
-            self.pw = pg.plot(title='Blackfynn electrode graph',
-                              labels={'left': f'EEG value of node', 'bottom': 'time in seconds'})
-            self._ui.Login_groupBox.setTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Login details saved, click on a node to open graphs", None,
-                                                                       QtGui.QApplication.UnicodeUTF8))
-            self.initialiseBlackfynnData()
-            self._ui.api_secret.setText('***************************')
-            self.blackfynn.loaded = True
-
-
-    def initialiseBlackfynnData(self):
-        # self.blackfynn.api_key = self._ui.api_key.text()  <- commented so that we do not have to enter key each time
-        # self.blackfynn.api_secret = self._ui.api_secret.text()
-        self.blackfynn.set_api_key_login()
-        self.blackfynn.set_params(channels='LG4', window_from_start=16) # need to add dataset selection
-        self.data = self.blackfynn.get()
-        self.updatePlot(4)
-        self.scaleCacheData()
-        self.initialiseSpectrum(self.data)
-
     def _addProfileClicked(self):
         dlg = AddProfileDialog(self, self._blackfynn_data_model.getExistingProfileNames())
 
@@ -397,59 +370,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._refreshMeshTypeOptions()
         #self._ecg_graphics.createGraphics()
 
-    def _meshTypeOptionCheckBoxClicked(self, checkBox):
-        self._generator_model.setMeshTypeOption(checkBox.objectName(), checkBox.isChecked())
-
-    def _meshTypeOptionLineEditChanged(self, lineEdit):
-        self._generator_model.setMeshTypeOption(lineEdit.objectName(), lineEdit.text())
-        finalValue = self._generator_model.getMeshTypeOption(lineEdit.objectName())
-        lineEdit.setText(str(finalValue))
-
-    def _refreshMeshTypeOptions(self):
-        pass
-
     def _refreshOptions(self):
         self._ui.framesPerSecond_spinBox.setValue(self._model.getFramesPerSecond())
         self._ui.timeLoop_checkBox.setChecked(self._model.isTimeLoop())
         self._refreshBlackfynnOptions()
-        self._refreshMeshTypeOptions()
-
-    def _deleteElementRangesLineEditChanged(self):
-        self._generator_model.setDeleteElementsRangesText(self._ui.deleteElementsRanges_lineEdit.text())
-        self._ui.deleteElementsRanges_lineEdit.setText(self._generator_model.getDeleteElementsRangesText())
-
-    def _scaleLineEditChanged(self):
-        self._generator_model.setScaleText(self._ui.scale_lineEdit.text())
-        self._ui.scale_lineEdit.setText(self._generator_model.getScaleText())
-
-    def converNodesToMesh(self):
-        self._generator_model.setDisplayAxes(self._ui.displayAxes_checkBox.isChecked())
-        # for testing, we delete our ecg nodes and reload the entire mesh
-        self._ecg_graphics.deleteAll()
-        self._meshTypeChanged(9)
-        self._meshTypeChanged(10)
-
-        # prepare data
-        self.scaleCacheData()
-        self._ecg_graphics.initialiseSpectrum(self.data)
-        ECGmatrix = []
-        for key in self.data['cache']:
-            ECGmatrix.append(self.data['cache'][key][0::10])
-        for i in range(len(ECGmatrix)):
-            ECGmatrix[i].append(ECGmatrix[i][-1])
-        ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
-
-        # clear all of the current mesh data by going to a mesh with nothing in it
-        self._generator_model.deleteAll()
-        # self._meshTypeChanged(3)
-
-        # create our new mesh with the Blackfynn_2d_plate class
-        pm = Blackfynn_2d_plate(self._generator_model._region, self._ecg_graphics.node_coordinate_list)
-        pm.ECGtimes = ECGtimes.tolist()
-        pm.ECGcoloursMatrix = ECGmatrix
-        pm.generateMesh()
-        pm.drawMesh()
-
 
     def _exportWebGLJson(self):
         '''
@@ -487,8 +411,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
             buffer = [resources[i].getBuffer()[1] for i in range(number)]
 
-            heartPath = 'C:\\Users\jkho021\Projects\\alansnew\MPB\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
-            htmlIndexPath = 'C:\\Users\jkho021\Projects\\alansnew\MPB\simple_heart\\index.html'
+            mpbPath = self._ui.exportDirectory_lineEdit.text()
+
+            heartPath = mpbPath + '\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
+            htmlIndexPath = mpbPath + '\simple_heart\\index.html'
             for i, content in enumerate(buffer):
                 if content is None:
                     break
