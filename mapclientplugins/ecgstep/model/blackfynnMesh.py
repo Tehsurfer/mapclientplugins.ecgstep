@@ -40,8 +40,8 @@ class Blackfynn_2d_plate(object):
 
         coordinateDimensions = 3
         self.number_points = len(self.node_coordinate_list)
-        elementsCount1 = int(self.number_points**.5 - 1)
-        elementsCount2 = int(self.number_points**.5 - 1)
+        elementsCount1 = int((self.number_points**.5) - 1)
+        elementsCount2 = int((self.number_points**.5) - 1)
         useCrossDerivatives = 0
 
         # Set up our coordinate field

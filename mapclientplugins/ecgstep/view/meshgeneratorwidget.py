@@ -25,7 +25,6 @@ import time
 
 # imports added for pop up graph
 import pyqtgraph as pg
-
 import numpy as np
 
 class MeshGeneratorWidget(QtGui.QWidget):
@@ -199,6 +198,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
         return yterp
 
     def initialiseSpectrum(self, data):
+        # initialiseSpectrum modifies the scale of the spectrum to match a set of data
+
         maximum = -1000000
         minimum = 1000000
         for key in data['cache']:
@@ -241,14 +242,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         frame_vals = np.linspace(0, 16, NUMBER_OF_FRAMES)
         currentFrame = (np.abs(frame_vals - value)).argmin()
         return currentFrame
-
-    def find_nearest(array, value):
-        # fin_nearets() Find the index of the nearest value in an array
-        idx = np.searchsorted(array, value, side="left")
-        if idx > 0 and (idx == len(array) or math.fabs(value - array[idx - 1]) < math.fabs(value - array[idx])):
-            return array[idx - 1]
-        else:
-            return array[idx]
 
     def _updateFrameIndex(self, value):
         self._ui.frameIndex_spinBox.blockSignals(True)
@@ -407,12 +400,14 @@ class MeshGeneratorWidget(QtGui.QWidget):
             for i in range(number):
                 resources.append(sceneSR.createStreamresourceMemory())
             scene.write(sceneSR)
-            # Write out each resource into their own file
 
+            # Store all the resources in a buffer
             buffer = [resources[i].getBuffer()[1] for i in range(number)]
 
             mpbPath = self._ui.exportDirectory_lineEdit.text()
 
+            # Write the files to directories for the MPB to read.
+            # Find it at https://github.com/Tehsurfer/MPB
             heartPath = mpbPath + '\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
             htmlIndexPath = mpbPath + '\simple_heart\\index.html'
             for i, content in enumerate(buffer):
