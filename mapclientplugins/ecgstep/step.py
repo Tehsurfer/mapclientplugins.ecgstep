@@ -5,7 +5,7 @@ MAP Client Plugin Step
 from PySide import QtGui
 
 from mapclient.mountpoints.workflowstep import WorkflowStepMountPoint
-from mapclientplugins.dumydatastep.configuredialog import ConfigureDialog
+from mapclientplugins.ecgstep.configuredialog import ConfigureDialog
 from mapclientplugins.ecgstep.view.meshgeneratorwidget import MeshGeneratorWidget
 from mapclientplugins.ecgstep.model.mastermodel import MasterModel
 
