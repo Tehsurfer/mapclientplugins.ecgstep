@@ -425,9 +425,32 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     f2 = open(heartPath + 'ecgAnimation.json', 'w')
                     f2.write(content)
                     f2.close()
-                f = open(f'webGLExport{i+1}.json', 'w')
-                f.write(content)
+                # f = open(f'webGLExport{i+1}.json', 'w') # for debugging
+                # f.write(content)
             webbrowser.open(htmlIndexPath)
+        except:
+            pass
+
+    def _exportWebGLJsonToBlackfynn(self):
+        '''
+            Export graphics into JSON formats. Returns an array containing the
+       string buffers for each export
+            '''
+
+        try:
+            self.data
+
+            mpbPath = self._ui.exportDirectory_lineEdit.text()
+
+            # Write the files to directories for the MPB to read.
+            # Find it at https://github.com/Tehsurfer/MPB
+            heartPath = mpbPath + '\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
+            htmlIndexPath = mpbPath + '\simple_heart\\index.html'
+
+            self._blackfynn_data_model.uploadRender(heartPath + 'picking_node_2.json')
+            self._blackfynn_data_model.uploadRender(heartPath + 'picking_node_3.json')
+            self._blackfynn_data_model.uploadRender(heartPath + 'ecgAnimation.json')
+
         except:
             pass
 

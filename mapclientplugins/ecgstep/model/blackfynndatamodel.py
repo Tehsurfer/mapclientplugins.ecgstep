@@ -6,6 +6,7 @@ class BlackfynnDataModel(object):
     def __init__(self):
         self._settings = {'active-profile': ''}
         self._cache = {}
+        self._bf = None
 
     def addProfile(self, profile):
         self._settings[profile['name']] = {'api_token': profile['token'], 'api_secret': profile['secret']}
@@ -25,7 +26,8 @@ class BlackfynnDataModel(object):
         api_key = self._settings[profile_name]['api_token']
         api_secret = self._settings[profile_name]['api_secret']
         print('[{0}]:[{1}]'.format(api_key, api_secret))
-        return Blackfynn(api_token=api_key, api_secret=api_secret)
+        self._bf = Blackfynn(api_token=api_key, api_secret=api_secret)
+        return self._bf
 
     def getDatasets(self, profile_name, refresh=False):
         if profile_name in self._cache and not refresh:
@@ -69,6 +71,14 @@ class BlackfynnDataModel(object):
             cache_dictionary[key] = data_frame[key].values.tolist()
         return cache_dictionary
 
+
+    def uploadRender(self, filePath):
+        try:
+            ds = self._bf.get_dataset('Zinc Exports')
+        except:
+            self._bf.create_dataset('Zinc Exports')
+            ds = self._bf.get_dataset('Zinc Exports')
+        ds.upload(filePath)
 
     def getSettings(self):
         return self._settings
