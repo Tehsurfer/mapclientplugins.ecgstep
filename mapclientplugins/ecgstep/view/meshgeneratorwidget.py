@@ -96,7 +96,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
         """
         sceneviewer = self._ui.sceneviewer_widget.getSceneviewer()
         if sceneviewer is not None:
-            sceneviewer.setPerturbLinesFlag(self._generator_model.needPerturbLines())
+            #sceneviewer.setPerturbLinesFlag(self._generator_model.needPerturbLines())
+            pass
 
     def _makeConnections(self):
         self._ui.sceneviewer_widget.graphicsInitialized.connect(self._graphicsInitialized)

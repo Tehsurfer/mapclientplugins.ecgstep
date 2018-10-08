@@ -3,7 +3,7 @@
 MAP Client Plugin
 """
 
-__version__ = '0.1.0'
+__version__ = '1.0.0'
 __author__ = 'Jesse Khorasanee'
 __stepname__ = 'ecg'
 __location__ = ''
