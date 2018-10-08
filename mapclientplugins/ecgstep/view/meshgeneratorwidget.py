@@ -32,8 +32,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def __init__(self, model, parent=None, port_data=[]):
         super(MeshGeneratorWidget, self).__init__(parent)
         self._ui = Ui_MeshGeneratorWidget()
-
-        self._generator_model = model.getGeneratorModel()
         self._model = model
         self._model.registerTimeValueUpdateCallback(self._updateTimeValue)
         self._model.registerFrameIndexUpdateCallback(self._updateFrameIndex)
@@ -42,8 +40,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._doneCallback = None
         self._marker_mode_active = False
         self._have_images = False
-        self.x = 0
-        self.y = 0
+
+
         self.time = 0
         self.pw = None
         self.node_coordinate_list = port_data
@@ -51,10 +49,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
         self._blackfynn_data_model = model.getBlackfynnDataModel()
         self._ui.sceneviewer_widget.setContext(model.getContext())
-        self._ui.sceneviewer_widget.setModel(self._generator_model)
+        self._ui.sceneviewer_widget.setModel(self._model)
         self._ui.sceneviewer_widget.initializeGL()
-        self._generator_model.enableAlignment()
-        self._generator_model.setStateAlign(state=True)
         self._makeConnections()
 
 
@@ -65,7 +61,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         """
         sceneviewer = self._ui.sceneviewer_widget.getSceneviewer()
         if sceneviewer is not None:
-            self._model.loadSettings()
             self._refreshOptions()
             scene = self._model.getScene()
             self._ui.sceneviewer_widget.setScene(scene)
@@ -145,18 +140,11 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self._ui.frameIndex_spinBox.setMaximum(frame_count)
             self._ui.timeValue_doubleSpinBox.setMaximum(frame_count / self._model.getFramesPerSecond())
         else:
-            self._generator_model.disableAlignment()
-            self._plane_model.disableAlignment()
             self._ui.alignment_groupBox.setVisible(False)
             self._ui.fiducialMarkers_groupBox.setVisible(False)
             self._ui.video_groupBox.setVisible(False)
             self._ui.displayImagePlane_checkBox.setVisible(False)
             self._ui.displayFiducialMarkers_checkBox.setVisible(False)
-
-    def setImageInfo(self, image_info):
-        self._plane_model.setImageInfo(image_info)
-        self._have_images = image_info is not None
-        self._updateUi()
 
     def _doneButtonClicked(self):
         self._ui.dockWidget.setFloating(False)
@@ -177,11 +165,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self._ui.timeValue_doubleSpinBox.setValue(value)
             if self.pw is not None:
                 self.line.setValue(round(value, 3)) # adjust time marker
-            # if self._ui.displayEEGAnimation_checkBox.isChecked() and self.data is not False:
-            #     pass
-                # use model to update colours
-                #self.updateAllNodes(value)
-            #self.updatePlate(value)
+
         self._ui.timeValue_doubleSpinBox.blockSignals(False)
 
     def scaleCacheData(self):
@@ -208,7 +192,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             array_min = min(data['cache'][key])
             maximum = max(array_max, maximum)
             minimum = min(array_min, minimum)
-        scene = self._generator_model._region.findChildByName('ecg_plane').getScene()
+        scene = self._model._region.findChildByName('ecg_plane').getScene()
         specMod = scene.getSpectrummodule()
         spectrum = specMod.findSpectrumByName('eegColourSpectrum2')
         spectrum_component = spectrum.getFirstSpectrumcomponent()
@@ -217,9 +201,12 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _renderECGMesh(self):
 
-        pm = Blackfynn_2d_plate(self._generator_model._region, self.node_coordinate_list)
+        self._pm = Blackfynn_2d_plate(self._model._region, self.node_coordinate_list)
+        self._pm.setScene(self._model.getScene())
+
 
         if self.data:
+
             # prepare data
             self.scaleCacheData()
             self.initialiseSpectrum(self.data)
@@ -229,15 +216,17 @@ class MeshGeneratorWidget(QtGui.QWidget):
             for i in range(len(ECGmatrix)):
                 ECGmatrix[i].append(ECGmatrix[i][-1])
             ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
-            pm.ECGtimes = ECGtimes.tolist()
-            pm.ECGcoloursMatrix = ECGmatrix
-
-            self._generator_model.initialiseSpectrumFromDictionary(self.data['cache'])
-
-        pm.generateMesh()
-        pm.drawMesh()
+            self._pm.ECGtimes = ECGtimes.tolist()
+            self._pm.ECGcoloursMatrix = ECGmatrix
 
 
+
+        self._pm.generateMesh()
+        self._pm.drawMesh()
+        self._pm.enableAlignment()
+        self._pm.setStateAlign(state=True)
+        self._pm.initialiseSpectrumFromDictionary(self.data['cache'])
+        self._ui.sceneviewer_widget.setModel(self._pm)
 
     def currentFrame(self, value):
         frame_vals = np.linspace(0, 16, NUMBER_OF_FRAMES)
@@ -354,16 +343,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.line = self.pw.addLine(x=self.time,
                                     pen='r')  # show current time
 
-
-    def _displayImagePlaneClicked(self):
-        self._plane_model.setImagePlaneVisible(self._ui.displayImagePlane_checkBox.isChecked())
-
-    def _meshTypeChanged(self, index):
-        meshTypeName = self._ui.meshType_comboBox.itemText(index)
-        self._generator_model.setMeshTypeByName(meshTypeName)
-        self._refreshMeshTypeOptions()
-        #self._ecg_graphics.createGraphics()
-
     def _refreshOptions(self):
         self._ui.framesPerSecond_spinBox.setValue(self._model.getFramesPerSecond())
         self._ui.timeLoop_checkBox.setChecked(self._model.isTimeLoop())
@@ -384,7 +363,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
                 ECGmatrix[i].append(ECGmatrix[i][-1])
             ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
 
-            ecg_region = self._generator_model._region.findChildByName('ecg_plane')
+            ecg_region = self._model._region.findChildByName('ecg_plane')
             scene = ecg_region.getScene()
             sceneSR = scene.createStreaminformationScene()
             sceneSR.setIOFormat(sceneSR.IO_FORMAT_THREEJS)
@@ -426,8 +405,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     f2 = open(heartPath + 'ecgAnimation.json', 'w')
                     f2.write(content)
                     f2.close()
-                # f = open(f'webGLExport{i+1}.json', 'w') # for debugging
-                # f.write(content)
+                f = open(f'webGLExport{i+1}.json', 'w') # for debugging
+                f.write(content)
             webbrowser.open(htmlIndexPath)
         except:
             pass
@@ -467,30 +446,25 @@ class MeshGeneratorWidget(QtGui.QWidget):
         if self._ui.sceneviewer_widget.getSceneviewer() is not None:
             self._ui.sceneviewer_widget.viewAll()
 
-    def keyPressEvent(self, event):
-        if event.modifiers() & QtCore.Qt.CTRL and QtGui.QApplication.mouseButtons() == QtCore.Qt.NoButton:
-            self._marker_mode_active = True
-            self._ui.sceneviewer_widget._model = self._fiducial_marker_model
-            self._original_mousePressEvent = self._ui.sceneviewer_widget.mousePressEvent
-            self._ui.sceneviewer_widget.original_mousePressEvent = self._ui.sceneviewer_widget.mousePressEvent
-            self._ui.sceneviewer_widget.plane_model_temp = self._plane_model
-
-            self._ui.sceneviewer_widget._calculatePointOnPlane = types.MethodType(_calculatePointOnPlane, self._ui.sceneviewer_widget)
-            self._ui.sceneviewer_widget.mousePressEvent = types.MethodType(mousePressEvent, self._ui.sceneviewer_widget)
-            #self._ui.sceneviewer_widget.foundNode = False
-            self._model.printLog()
-
-    def keyReleaseEvent(self, event):
-        if self._marker_mode_active:
-            self._marker_mode_active = False
-            self._ui.sceneviewer_widget._model = self._plane_model
-            self._ui.sceneviewer_widget._calculatePointOnPlane = None
-            self._ui.sceneviewer_widget.mousePressEvent = self._original_mousePressEvent
-            if self._ui.sceneviewer_widget.foundNode and len(self._ui.sceneviewer_widget.grid) is 2:
-                self.updatePlot(self._ui.sceneviewer_widget.nodeKey) # updates plot if a node is clicked
-                if self._ui.sceneviewer_widget.nodeKey in self._ecg_graphics.node_corner_list:
-                    self._ecg_graphics.updateGrid(self._ui.sceneviewer_widget.nodeKey,  self._ui.sceneviewer_widget.grid[1])
-                self._ui.sceneviewer_widget.foundNode = False
+    # def keyPressEvent(self, event):
+    #     if event.modifiers() & QtCore.Qt.CTRL and QtGui.QApplication.mouseButtons() == QtCore.Qt.NoButton:
+    #         self._marker_mode_active = True
+    #
+    #         self._ui.sceneviewer_widget._calculatePointOnPlane = types.MethodType(_calculatePointOnPlane, self._ui.sceneviewer_widget)
+    #         self._ui.sceneviewer_widget.mousePressEvent = types.MethodType(mousePressEvent, self._ui.sceneviewer_widget)
+    #         #self._ui.sceneviewer_widget.foundNode = False
+    #         self._model.printLog()
+    #
+    # def keyReleaseEvent(self, event):
+    #     if self._marker_mode_active:
+    #         self._marker_mode_active = False
+    #         self._ui.sceneviewer_widget._calculatePointOnPlane = None
+    #         self._ui.sceneviewer_widget.mousePressEvent = self._original_mousePressEvent
+    #         if self._ui.sceneviewer_widget.foundNode and len(self._ui.sceneviewer_widget.grid) is 2:
+    #             self.updatePlot(self._ui.sceneviewer_widget.nodeKey) # updates plot if a node is clicked
+    #             if self._ui.sceneviewer_widget.nodeKey in self._ecg_graphics.node_corner_list:
+    #                 self._ecg_graphics.updateGrid(self._ui.sceneviewer_widget.nodeKey,  self._ui.sceneviewer_widget.grid[1])
+    #             self._ui.sceneviewer_widget.foundNode = False
 
 
 
@@ -509,9 +483,8 @@ def mousePressEvent(self, event):
             self.nodeKey = node.getIdentifier()
             self.node = node
             self.grid = []
-        # return sceneviewers 'mouspressevent' function to its version for navigation
 
-        self._model = self.plane_model_temp
+        # return sceneviewers 'mouspressevent' function to its version for navigation
         self._calculatePointOnPlane = None
         self.mousePressEvent = self.original_mousePressEvent
 
