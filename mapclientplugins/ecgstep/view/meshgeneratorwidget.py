@@ -394,7 +394,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             for i, content in enumerate(buffer):
                 if content is None:
                     break
-                if (i + 1) is 2:
+                if (i + 1) is 4:
                     f2 = open(heartPath + 'picking_node_2.json', 'w')
                     f2.write(content)
                     f2.close()
@@ -402,7 +402,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     f2 = open(heartPath + 'picking_node_3.json', 'w')
                     f2.write(content)
                     f2.close()
-                if (i + 1) is 4:
+                if (i + 1) is 2:
                     f2 = open(heartPath + 'ecgAnimation.json', 'w')
                     f2.write(content)
                     f2.close()

@@ -32,10 +32,10 @@ class ecgStep(WorkflowStepMountPoint):
                       'ecg_grid_points'))
         self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#provides',
-                      'ecg_webgl_output'))
+                      'http://physiomeproject.org/workflow/1.0/rdf-schema#file_location'))
         # Port data:
         self._portData0 = None # ecg_grid_points
-        self._portData1 = None # ecg_webgl_output
+        self._portData1 = None # http://physiomeproject.org/workflow/1.0/rdf-schema#file_location
 
         # Config:
         self._config = {}
@@ -51,7 +51,13 @@ class ecgStep(WorkflowStepMountPoint):
         self._model = MasterModel(self._location, self._config['identifier'])
         self._view = MeshGeneratorWidget(self._model, port_data=self._portData0)
         self._setCurrentWidget(self._view)
-        self._view.registerDoneExecution(self._doneExecution)
+        self._view.registerDoneExecution(self._myDoneExecution)
+
+    def _myDoneExecution(self):
+        self._portData0 = self._model.getOutputModelFilename()
+        self._view = None
+        self._model = None
+        self._doneExecution()
 
     def setPortData(self, index, dataIn):
         """
@@ -63,6 +69,7 @@ class ecgStep(WorkflowStepMountPoint):
         :param dataIn: The data to set for the port at the given index.
         """
         self._portData0 = dataIn # ecg_grid_points
+
 
     def getPortData(self, index):
         """

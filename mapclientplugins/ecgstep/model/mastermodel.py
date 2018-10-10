@@ -33,7 +33,7 @@ class MasterModel(object):
             'time-loop': False
         }
         self._makeConnections()
-        # self._loadSettings()
+        self.loadSettings()
 
     def printLog(self):
         logger = self._context.getLogger()
@@ -94,9 +94,6 @@ class MasterModel(object):
 
     def getBlackfynnDataModel(self):
         return self._blackfynn_data_model
-
-    def getEcgGraphics(self):
-        return self._ecgGraphics
 
     def getScene(self):
         return self._region.getScene()
