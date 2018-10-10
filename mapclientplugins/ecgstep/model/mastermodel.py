@@ -26,8 +26,6 @@ class MasterModel(object):
         self._region = self._context.createRegion()
         self._blackfynn_data_model = BlackfynnDataModel()
 
-        # self._ecgGraphics = EcgGraphics()
-        # self._ecgGraphics.setRegion(self._region)
         self._settings = {
             'frames-per-second': 25,
             'time-loop': False

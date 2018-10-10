@@ -1,3 +1,8 @@
+# blackfynndatamodel.py
+# ---------------------
+# BlackfynnDataModel is a class used to store API keys of users who log in and use them to access the
+# blackfynn-python API. http://help.blackfynn.com/developer-tools
+
 from blackfynn import Blackfynn
 
 
@@ -73,6 +78,8 @@ class BlackfynnDataModel(object):
 
 
     def uploadRender(self, filePath):
+        # uploadRender: Takes a given file path and uploads it to blackfynn in a folder called 'Zinc Exports' for the
+        #               user currently logged in.
         try:
             ds = self._bf.get_dataset('Zinc Exports')
         except:

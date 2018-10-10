@@ -115,9 +115,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.blackfynnDatasets_comboBox.currentIndexChanged.connect(self._blackfynnDatasetsChanged)
         self._ui.downloadData_button.clicked.connect(self._downloadBlackfynnData)
         self._ui.UploadToBlackfynn_button.clicked.connect(self._exportWebGLJsonToBlackfynn)
-        # self._ui.submitButton.clicked.connect(self._submitClicked)
-        # self._ui.treeWidgetAnnotation.itemSelectionChanged.connect(self._annotationSelectionChanged)
-        # self._ui.treeWidgetAnnotation.itemChanged.connect(self._annotationItemChanged)
 
     def _createFMAItem(self, parent, text, fma_id):
         item = QtGui.QTreeWidgetItem(parent)
@@ -357,6 +354,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
         try:
             self.data
+
+            # Scale down our data (every 10th value) for exporting
             ECGmatrix = []
             for key in self.data['cache']:
                 ECGmatrix.append(self.data['cache'][key][0::10])
@@ -364,6 +363,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
                 ECGmatrix[i].append(ECGmatrix[i][-1])
             ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
 
+            # Set up our scene resource
             ecg_region = self._model._region.findChildByName('ecg_plane')
             scene = ecg_region.getScene()
             sceneSR = scene.createStreaminformationScene()
@@ -406,16 +406,16 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     f2 = open(heartPath + 'ecgAnimation.json', 'w')
                     f2.write(content)
                     f2.close()
-                f = open(f'webGLExport{i+1}.json', 'w') # for debugging
-                f.write(content)
+                # f = open(f'webGLExport{i+1}.json', 'w') # for debugging
+                # f.write(content)
             webbrowser.open(htmlIndexPath)
         except:
             pass
 
     def _exportWebGLJsonToBlackfynn(self):
         '''
-            Export graphics into JSON formats. Returns an array containing the
-       string buffers for each export
+        exportWebGLJsonToBlackfynn: Using the logged in Blackfynn user we upload all of the needed files for rendering
+            the current model
             '''
 
         try:
