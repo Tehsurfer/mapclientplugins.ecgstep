@@ -1,2 +1,3 @@
 git+https://github.com/hsorby/blackfynn-python.git
 pyqtgraph
+natsort

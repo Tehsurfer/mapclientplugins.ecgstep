@@ -25,6 +25,7 @@ import time
 
 # imports added for pop up graph
 import pyqtgraph as pg
+
 import numpy as np
 
 class MeshGeneratorWidget(QtGui.QWidget):

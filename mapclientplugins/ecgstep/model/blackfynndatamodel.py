@@ -4,6 +4,7 @@
 # blackfynn-python API. http://help.blackfynn.com/developer-tools
 
 from blackfynn import Blackfynn
+from natsort import natsorted
 
 
 class BlackfynnDataModel(object):
@@ -72,7 +73,8 @@ class BlackfynnDataModel(object):
     def _create_file_cache(self, data_frame):
 
         cache_dictionary = {}
-        for key in data_frame:
+        keys = natsorted(data_frame.keys()) # Sort the keys in 'natural' order
+        for key in keys:
             cache_dictionary[key] = data_frame[key].values.tolist()
         return cache_dictionary
 
