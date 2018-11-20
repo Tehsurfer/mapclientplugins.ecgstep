@@ -68,7 +68,12 @@ class BlackfynnDataModel(object):
                 timeseries_dframe = stored_dataset.get_data(length='16s')
 
         cache_output = self._create_file_cache(timeseries_dframe)
-        return cache_output
+        absolute_timeseries_values = timeseries_dframe.axes[0]
+        relative_times = []
+        for time in absolute_timeseries_values:
+            relative_times.append( round( time.timestamp() - absolute_timeseries_values[0].timestamp(), 6) )
+        return [cache_output, relative_times]
+
 
     def _create_file_cache(self, data_frame):
 
@@ -76,6 +81,7 @@ class BlackfynnDataModel(object):
         keys = natsorted(data_frame.keys()) # Sort the keys in 'natural' order
         for key in keys:
             cache_dictionary[key] = data_frame[key].values.tolist()
+
         return cache_dictionary
 
 

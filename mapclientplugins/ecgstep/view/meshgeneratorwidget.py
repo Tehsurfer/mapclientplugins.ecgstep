@@ -11,6 +11,7 @@ import types
 from PySide import QtGui, QtCore
 from functools import partial
 import webbrowser, os
+import json
 
 from mapclient.view.utils import set_wait_cursor
 from mapclientplugins.ecgstep.view.ecg_ui import Ui_MeshGeneratorWidget
@@ -295,9 +296,12 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _downloadBlackfynnData(self):
         self.data = {}
-        self.data['cache'] = self._blackfynn_data_model.getTimeseriesData(self._ui.profiles_comboBox.currentText(),
+        blackfynnOutput = self._blackfynn_data_model.getTimeseriesData(self._ui.profiles_comboBox.currentText(),
                                                         self._ui.blackfynnDatasets_comboBox.currentText(),
                                                         self._ui.blackfynnTimeSeries_comboBox.currentText())
+        self.data['cache'] = blackfynnOutput[0]
+        self.data['times'] = blackfynnOutput[1]
+        self._exportDataJson()
         self._renderECGMesh()
 
     def _updateBlackfynnUi(self):
@@ -346,6 +350,15 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.framesPerSecond_spinBox.setValue(self._model.getFramesPerSecond())
         self._ui.timeLoop_checkBox.setChecked(self._model.isTimeLoop())
         self._refreshBlackfynnOptions()
+
+    def _exportDataJson(self):
+        export_data = {}
+        export_data['values'] = {}
+        for key in self.data['cache']:
+            export_data['values'][key] = self.data['cache'][key]
+        export_data['times'] = self.data['times']
+        with open('ecgDataFull.json', 'w') as fp:
+            json.dump(export_data, fp)
 
     def _exportWebGLJson(self):
         '''
