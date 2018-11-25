@@ -208,7 +208,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         if self.data:
 
             # prepare data
-            self.scaleCacheData()
+            #self.scaleCacheData()
             self.initialiseSpectrum(self.data)
             ECGmatrix = []
             for key in self.data['cache']:
@@ -412,10 +412,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     f2 = open(heartPath + 'picking_node_2.json', 'w')
                     f2.write(content)
                     f2.close()
-                if (i + 1) is 3:
-                    f2 = open(heartPath + 'picking_node_3.json', 'w')
-                    f2.write(content)
-                    f2.close()
                 if (i + 1) is 2:
                     f2 = open(heartPath + 'ecgAnimation.json', 'w')
                     f2.write(content)
@@ -443,7 +439,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
             htmlIndexPath = mpbPath + '\simple_heart\\index.html'
 
             self._blackfynn_data_model.uploadRender(heartPath + 'picking_node_2.json')
-            self._blackfynn_data_model.uploadRender(heartPath + 'picking_node_3.json')
             self._blackfynn_data_model.uploadRender(heartPath + 'ecgAnimation.json')
 
         except:
