@@ -16,6 +16,8 @@ import json
 from mapclient.view.utils import set_wait_cursor
 from mapclientplugins.ecgstep.view.ecg_ui import Ui_MeshGeneratorWidget
 from mapclientplugins.ecgstep.view.addprofile import AddProfileDialog
+from mapclientplugins.ecgstep.model.video import Video
+from mapclientplugins.ecgstep.model.plot import Plot
 from mapclientplugins.ecgstep.model.blackfynnMesh import Blackfynn_2d_plate
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
 
@@ -117,6 +119,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.blackfynnDatasets_comboBox.currentIndexChanged.connect(self._blackfynnDatasetsChanged)
         self._ui.downloadData_button.clicked.connect(self._downloadBlackfynnData)
         self._ui.UploadToBlackfynn_button.clicked.connect(self._exportWebGLJsonToBlackfynn)
+        self._ui.viewVideo_button.clicked.connect(self._playVideo)
+        self._ui.adjustData_Slider.valueChanged.connect(self._adjustData)
 
     def _createFMAItem(self, parent, text, fma_id):
         item = QtGui.QTreeWidgetItem(parent)
@@ -326,6 +330,18 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _blackfynnDatasetsChanged(self, index):
         print(index)
+
+    def _playVideo(self):
+        self.plt = Plot('ecgDataFull.json')
+        self.vid = Video('heartBeatFullHD.mp4', 30)
+        self._adjustData()
+        self.vid.line = self.plt.line
+        self.vid.datalen = self.plt.datalen
+        self.vid.playVideo()
+    def _adjustData(self):
+        newOffset = self._ui.adjustData_Slider.value()/100
+        self.plt.adjustData(newOffset)
+        self.vid.line = self.plt.line
 
     def updatePlot(self, key):
 
