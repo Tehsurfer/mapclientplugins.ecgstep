@@ -65,14 +65,39 @@ class BlackfynnDataModel(object):
     def getTimeseriesData(self, profile_name, dataset_name, timeseries_name):
         for stored_dataset in self._cache[profile_name][dataset_name]:
             if stored_dataset.name == timeseries_name:
-                timeseries_dframe = stored_dataset.get_data(length='16s')
+                if stored_dataset.type == 'TimeSeries':
+                    return  self.proecessTimeseriesData(stored_dataset)
+                if stored_dataset.type == 'Tabular':
+                    return  self.proecessTabularData(stored_dataset)
 
+    def proecessTimeseriesData(self, stored_dataset):
+        timeseries_dframe = stored_dataset.get_data(length='16s')
         cache_output = self._create_file_cache(timeseries_dframe)
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []
         for time in absolute_timeseries_values:
-            relative_times.append( round( time.timestamp() - absolute_timeseries_values[0].timestamp(), 6) )
+            relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6))
         return [cache_output, relative_times]
+
+    def proecessTabularData(self, stored_dataset):
+        timeseries_dframe =stored_dataset.get_data(16*100)
+
+        absolute_timeseries_values = timeseries_dframe.axes[0]
+        relative_times = []
+        if str(type(absolute_timeseries_values[0])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>":
+            for time in absolute_timeseries_values:
+                relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6))
+        else:
+            for time in absolute_timeseries_values:
+                relative_times.append(time)
+
+        cache_output = self._create_file_cache(timeseries_dframe)
+        return [cache_output, relative_times]
+
+
+        pass
+
+
 
 
     def _create_file_cache(self, data_frame):
@@ -80,7 +105,8 @@ class BlackfynnDataModel(object):
         cache_dictionary = {}
         keys = natsorted(data_frame.keys()) # Sort the keys in 'natural' order
         for key in keys:
-            cache_dictionary[key] = data_frame[key].values.tolist()
+            if 'time' not in key:
+                cache_dictionary[key] = data_frame[key].values.tolist()
 
         return cache_dictionary
 

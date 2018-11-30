@@ -216,7 +216,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self.initialiseSpectrum(self.data)
             ECGmatrix = []
             for key in self.data['cache']:
-                ECGmatrix.append(self.data['cache'][key][0::10])
+                if 'time' not in key:
+                    ECGmatrix.append(self.data['cache'][key][0::10])
             for i in range(len(ECGmatrix)):
                 ECGmatrix[i].append(ECGmatrix[i][-1])
             ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
@@ -388,7 +389,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
             # Scale down our data (every 10th value) for exporting
             ECGmatrix = []
             for key in self.data['cache']:
-                ECGmatrix.append(self.data['cache'][key][0::10])
+                if 'time' not in key:
+                    ECGmatrix.append(self.data['cache'][key][0::10])
             for i in range(len(ECGmatrix)):
                 ECGmatrix[i].append(ECGmatrix[i][-1])
             ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
