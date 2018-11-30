@@ -184,22 +184,23 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def _renderECGMesh(self):
 
         self._pm = BlackfynnMesh(self._model.get_region(), self._node_coordinates_data)
-        self._pm.setScene(self._model.getScene())
+        # self._pm.set_scene(self._model.getScene())
 
         if self.data:
 
             # prepare data
             #self.scaleCacheData()
             self.initialiseSpectrum(self.data)
-            ECGmatrix = []
+            ecg_mmatrix = []
             for key in self.data['cache']:
                 if 'time' not in key:
-                    ECGmatrix.append(self.data['cache'][key][0::10])
-            for i in range(len(ECGmatrix)):
-                ECGmatrix[i].append(ECGmatrix[i][-1])
-            ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
-            self._pm.ECGtimes = ECGtimes.tolist()
-            self._pm.ECGcoloursMatrix = ECGmatrix
+                    ecg_mmatrix.append(self.data['cache'][key][0::10])
+            for i in range(len(ecg_mmatrix)):
+                ecg_mmatrix[i].append(ecg_mmatrix[i][-1])
+            ecg_times = np.linspace(0, 1, len(ecg_mmatrix[:][0]))
+
+            self._pm.set_data_time_sequence(ecg_times.tolist())
+            self._pm.set_data(ecg_mmatrix)
 
         self._pm.generate_mesh()
         self._pm.drawMesh()
@@ -279,7 +280,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
                                                         self._ui.blackfynnTimeSeries_comboBox.currentText())
         self.data['cache'] = blackfynnOutput[0]
         self.data['times'] = blackfynnOutput[1]
-        self._exportDataJson()
+        # self._exportDataJson()
         self._renderECGMesh()
 
     def _updateBlackfynnUi(self):
@@ -342,8 +343,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._refreshBlackfynnOptions()
 
     def _exportDataJson(self):
-        export_data = {}
-        export_data['values'] = {}
+        export_data = {'values': {}}
         for key in self.data['cache']:
             export_data['values'][key] = self.data['cache'][key]
         export_data['times'] = self.data['times']
@@ -498,8 +498,6 @@ def mousePressEvent(self, event):
             self.grid = []
 
     return [event.x(), event.y()]
-
-
 
 
 def _calculatePointOnPlane(self, x, y):
