@@ -32,11 +32,15 @@ class ecgStep(WorkflowStepMountPoint):
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#uses',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#time_based_electrode_scaffold_positions'))
         self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
+                      'http://physiomeproject.org/workflow/1.0/rdf-schema#uses',
+                      'http://physiomeproject.org/workflow/1.0/rdf-schema#file_location'))
+        self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#provides',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#file_location'))
         # Port data:
-        self._portData0 = None # ecg_grid_points
-        self._portData1 = None # http://physiomeproject.org/workflow/1.0/rdf-schema#file_location
+        self._portData0 = None # time_based_electrode_scaffold_positions
+        self._portData1 = None # video_file_location
+        self._portData2 = None # http://physiomeproject.org/workflow/1.0/rdf-schema#file_location
 
         # Config:
         self._config = {'identifier': '', 'AutoDone': False}
@@ -47,7 +51,7 @@ class ecgStep(WorkflowStepMountPoint):
         Make sure you call the _doneExecution() method when finished.  This method
         may be connected up to a button in a widget for example.
         """
-        self._model = MasterModel(self._location, self._config['identifier'])
+        self._model = MasterModel(self._location, self._config['identifier'], self._portData1)
         self._view = MeshGeneratorWidget(self._model, self._portData0)
         self._setCurrentWidget(self._view)
         self._view.registerDoneExecution(self._my_done_execution)
@@ -67,7 +71,11 @@ class ecgStep(WorkflowStepMountPoint):
         :param index: Index of the port to return.
         :param dataIn: The data to set for the port at the given index.
         """
-        self._portData0 = dataIn # ecg_grid_points
+        if index == 0:
+            self._portData0 = dataIn #ecg_grid_points
+        if index == 1:
+            self._portData1 = dataIn
+
 
     def getPortData(self, index):
         """
@@ -77,7 +85,7 @@ class ecgStep(WorkflowStepMountPoint):
 
         :param index: Index of the port to return.
         """
-        return self._portData1 # ecg_webgl_output
+        return self._portData2 # ecg_webgl_output
 
     def configure(self):
         """

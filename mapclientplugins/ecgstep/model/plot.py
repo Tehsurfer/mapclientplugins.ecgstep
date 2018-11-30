@@ -19,6 +19,16 @@ class Plot:
         self.line = self.pw.addLine(x=0,pen='r')
         self.datalen = max(data['times'])
 
+    def plotData(self, data):
+        self.original_data = data
+        self.data = data
+
+        self.pw = pg.plot(data['times'],
+                          data['cache'][next(iter(data))],
+                          pen='b')
+        self.line = self.pw.addLine(x=0, pen='r')
+        self.datalen = max(data['times'])
+
     def adjustData(self, value):
         newTimes = []
         for i,val in enumerate(self.original_data['times']):
@@ -26,6 +36,6 @@ class Plot:
 
         self.pw.clear()
         self.pw.plot(newTimes,
-                          self.data['values']['1'],
+                          self.data['cache'][next(iter(self.data))],
                           pen='b')
         self.line = self.pw.addLine(x=0, pen='r')

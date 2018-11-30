@@ -307,12 +307,13 @@ class MeshGeneratorWidget(QtGui.QWidget):
         print(index)
 
     def _playVideo(self):
-        self.plt = Plot('ecgDataFull.json')
-        self.vid = Video('heartBeatFullHD.mp4', 30)
-        self._adjustData()
-        self.vid.line = self.plt.line
-        self.vid.datalen = self.plt.datalen
-        self.vid.playVideo()
+        if self.data:
+            self.plt = Plot('ecgDataFull.json')
+            self.vid = Video(self._model.getVideoPath(), 30)
+            self._adjustData()
+            self.vid.line = self.plt.line
+            self.vid.datalen = self.plt.datalen
+            self.vid.playVideo()
     def _adjustData(self):
         newOffset = self._ui.adjustData_Slider.value()/100
         self.plt.adjustData(newOffset)
