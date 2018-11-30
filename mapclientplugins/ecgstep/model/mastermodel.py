@@ -9,6 +9,7 @@ from opencmiss.zinc.material import Material
 from mapclientplugins.ecgstep.model.blackfynndatamodel import BlackfynnDataModel
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
 
+
 class MasterModel(object):
 
     def __init__(self, location, identifier):
@@ -91,6 +92,9 @@ class MasterModel(object):
 
     def getBlackfynnDataModel(self):
         return self._blackfynn_data_model
+
+    def get_region(self):
+        return self._region
 
     def getScene(self):
         return self._region.getScene()
