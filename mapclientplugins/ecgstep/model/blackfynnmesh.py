@@ -4,44 +4,41 @@ blackfynn mesh takes an input of ECG points and renders it to apply our data fro
 This file is modified from 'meshtype_2d_plate1.py' created by Richard Christie.
 
 """
+import numpy as np
 
 from opencmiss.zinc.element import Element, Elementbasis
 from opencmiss.zinc.field import Field
 from opencmiss.zinc.node import Node
 from opencmiss.zinc.glyph import Glyph
-import opencmiss.zinc.scenecoordinatesystem as Scenecoordinatesystem
-from mapclientplugins.ecgstep.model.meshalignmentmodel import MeshAlignmentModel
-import numpy as np
-
-class Blackfynn_2d_plate(MeshAlignmentModel):
-    '''
-    Blackfynn_2d_plate is the central point for generating the model for our mesh and drawing it
-    '''
 
 
-    def __init__(self, region, node_coordinate_list=[]):
-        super(Blackfynn_2d_plate, self).__init__()
-        self.meshGroup = []
+class BlackfynnMesh(object):
+    """
+    BlackfynnMesh is the central point for generating the model for our mesh and drawing it
+    """
+
+    def __init__(self, region, node_coordinate_list):
+        super(BlackfynnMesh, self).__init__()
+        self._mesh_group = []
+        self._field_element_group = None
+        self._coordinates = None
+        self._time_sequence = []
+
         ecg_region = region.findChildByName('ecg_plane')
         if ecg_region.isValid():
             region.removeChild(ecg_region)
 
         self._region = region.createChild('ecg_plane')
-        self.node_coordinate_list = node_coordinate_list
+        self._node_coordinate_list = node_coordinate_list
 
         # Note that these are normally changed before generating the mesh
-        self.ECGcoloursMatrix = [[-5000,-4000,-3000],[-5000,-4000,-3000],]
-        self.ECGtimes = [0,.5,1]
 
-
-
-    def generateMesh(self):
+    def generate_mesh(self):
         """
         generateMesh: This is where all points, elements, and colour fields relating to them are defined
         """
-
         coordinateDimensions = 3
-        self.number_points = len(self.node_coordinate_list)
+        self.number_points = len(self._node_coordinate_list)
 
         # We currently find the number of elements by taking the square root of the number of given points
         elementsCount1 = int((self.number_points**.5) - 1)
@@ -105,22 +102,22 @@ class Blackfynn_2d_plate(MeshAlignmentModel):
         nodetemplate.setValueNumberOfVersions(colour, -1, Node.VALUE_LABEL_VALUE, 1)
         result = elementtemplate.defineField(colour, -1, eftBilinear)
 
-        timeSequence = fm.getMatchingTimesequence(self.ECGtimes)
+        timeSequence = fm.getMatchingTimesequence(self._time_sequence)
         nodetemplate.setTimesequence(colour, timeSequence)
 
         eegGrid = []
-        for coord in self.node_coordinate_list:
+        for coord in self._node_coordinate_list:
             eegGrid.append(coord)
 
         firstNodeNumber = 1
 
         # create nodes
         cache = fm.createFieldcache()
-        nodeIdentifier =  firstNodeNumber
-        x = [ 0.0, 0.0, 0.0 ]
-        dx_ds1 = [ 0, 0.0, 0.0 ]
-        dx_ds2 = [ 0.0, 0, 0.0 ]
-        zero = [ 0.0, 0.0, 0.0 ]
+        nodeIdentifier = firstNodeNumber
+        x = [0.0, 0.0, 0.0]
+        dx_ds1 = [0.0, 0.0, 0.0]
+        dx_ds2 = [0.0, 0.0, 0.0]
+        zero = [0.0, 0.0, 0.0]
         i = 0
         for n2 in range(elementsCount2 + 1):
             for n1 in range(elementsCount1 + 1):
@@ -136,7 +133,7 @@ class Blackfynn_2d_plate(MeshAlignmentModel):
                     coordinates.setNodeParameters(cache, -1, Node.VALUE_LABEL_D2_DS1DS2, 1, zero)
 
                 # Assign the new node its colour for each time step
-                for j, time in enumerate(self.ECGtimes):
+                for j, time in enumerate(self._time_sequence):
                     cache.setTime(time)
                     colour_value = self.ECGcoloursMatrix[i % len(self.ECGcoloursMatrix)][j]
                     colour.setNodeParameters(cache, -1, Node.VALUE_LABEL_VALUE, 1, colour_value)
@@ -150,16 +147,16 @@ class Blackfynn_2d_plate(MeshAlignmentModel):
         for e2 in range(elementsCount2):
             for e1 in range(elementsCount1):
                 element = meshGroup.createElement(elementIdentifier, elementtemplate)
-                bni = e2*no2 + e1 + firstNodeNumber
-                nodeIdentifiers = [ bni, bni + 1, bni + no2, bni + no2 + 1]
+                bni = e2 * no2 + e1 + firstNodeNumber
+                nodeIdentifiers = [bni, bni + 1, bni + no2, bni + no2 + 1]
                 result = element.setNodesByIdentifier(eft, nodeIdentifiers)
                 result = element.setNodesByIdentifier(eftBilinear, nodeIdentifiers)
                 elementIdentifier = elementIdentifier + 1
 
         # Set fields for later access
-        self.meshGroup = meshGroup
-        self.fieldElementGroup = fieldElementGroup
-        self.coordinates = coordinates
+        self._mesh_group = meshGroup
+        self._field_element_group = fieldElementGroup
+        self._coordinates = coordinates
 
         fm.endChange()
 
@@ -168,7 +165,7 @@ class Blackfynn_2d_plate(MeshAlignmentModel):
         scene = self._region.getScene()
         fm = self._region.getFieldmodule()
 
-        coordinates = self.coordinates
+        coordinates = self._coordinates
         coordinates = coordinates.castFiniteElement()
 
         materialModule = scene.getMaterialmodule()
@@ -257,4 +254,3 @@ class Blackfynn_2d_plate(MeshAlignmentModel):
 
         self._spectrum_component.setRangeMaximum(max)
         self._spectrum_component.setRangeMinimum(min)
-
