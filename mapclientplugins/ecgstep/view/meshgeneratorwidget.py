@@ -4,36 +4,27 @@ Created on Aug 29, 2017
 @author: Richard Christie
 """
 
-
 import types
 
 
-from PySide import QtGui, QtCore
-from functools import partial
-import webbrowser, os
 import json
+import webbrowser
+import numpy as np
+
+from PySide import QtGui, QtCore
 
 from mapclient.view.utils import set_wait_cursor
 from mapclientplugins.ecgstep.view.ecg_ui import Ui_MeshGeneratorWidget
 from mapclientplugins.ecgstep.view.addprofile import AddProfileDialog
 from mapclientplugins.ecgstep.model.video import Video
 from mapclientplugins.ecgstep.model.plot import Plot
-from mapclientplugins.ecgstep.model.blackfynnMesh import Blackfynn_2d_plate
+from mapclientplugins.ecgstep.model.blackfynnmesh import BlackfynnMesh
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
 
-from opencmiss.zinc.node import Node
-
-from opencmiss.utils.maths import vectorops
-import time
-
-# imports added for pop up graph
-import pyqtgraph as pg
-
-import numpy as np
 
 class MeshGeneratorWidget(QtGui.QWidget):
 
-    def __init__(self, model, parent=None, port_data=[]):
+    def __init__(self, model, node_coordinates_data, parent=None):
         super(MeshGeneratorWidget, self).__init__(parent)
         self._ui = Ui_MeshGeneratorWidget()
         self._model = model
@@ -45,11 +36,9 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._marker_mode_active = False
         self._have_images = False
 
-
         self.time = 0
         self.pw = None
-        self.node_coordinate_list = port_data
-
+        self._node_coordinates_data = node_coordinates_data
 
         self._blackfynn_data_model = model.getBlackfynnDataModel()
         self._ui.sceneviewer_widget.setContext(model.getContext())
@@ -91,7 +80,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self._ui.sceneviewer_widget.setScene(scene)
             self._autoPerturbLines()
             self._viewAll()
-
 
     def _autoPerturbLines(self):
         """
@@ -138,17 +126,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._doneCallback = doneCallback
 
     def _updateUi(self):
-        if self._have_images:
-            frame_count = NUMBER_OF_FRAMES
-            self._ui.numFramesValue_label.setText("{0}".format(frame_count))
-            self._ui.frameIndex_spinBox.setMaximum(frame_count)
-            self._ui.timeValue_doubleSpinBox.setMaximum(frame_count / self._model.getFramesPerSecond())
-        else:
-            self._ui.alignment_groupBox.setVisible(False)
-            self._ui.fiducialMarkers_groupBox.setVisible(False)
-            self._ui.video_groupBox.setVisible(False)
-            self._ui.displayImagePlane_checkBox.setVisible(False)
-            self._ui.displayFiducialMarkers_checkBox.setVisible(False)
+        pass
 
     def _doneButtonClicked(self):
         self._ui.dockWidget.setFloating(False)
@@ -205,9 +183,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _renderECGMesh(self):
 
-        self._pm = Blackfynn_2d_plate(self._model._region, self.node_coordinate_list)
+        self._pm = BlackfynnMesh(self._model.get_region(), self._node_coordinates_data)
         self._pm.setScene(self._model.getScene())
-
 
         if self.data:
 
@@ -224,12 +201,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self._pm.ECGtimes = ECGtimes.tolist()
             self._pm.ECGcoloursMatrix = ECGmatrix
 
-
-
-        self._pm.generateMesh()
+        self._pm.generate_mesh()
         self._pm.drawMesh()
-        self._pm.enableAlignment()
-        self._pm.setStateAlign(state=True)
         self._pm.initialiseSpectrumFromDictionary(self.data['cache'])
         self._ui.sceneviewer_widget.setModel(self._pm)
 
