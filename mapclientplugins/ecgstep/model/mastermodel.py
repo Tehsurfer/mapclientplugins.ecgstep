@@ -93,6 +93,9 @@ class MasterModel(object):
     def getBlackfynnDataModel(self):
         return self._blackfynn_data_model
 
+    def get_region(self):
+        return self._region
+
     def getScene(self):
         return self._region.getScene()
 

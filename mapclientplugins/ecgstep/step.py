@@ -26,11 +26,11 @@ class ecgStep(WorkflowStepMountPoint):
         self._model = None
 
         # Add any other initialisation code here:
-        self._icon =  QtGui.QImage(':/ecgstep/images/Ic_grid_on_48px.svg.png')
+        self._icon = QtGui.QImage(':/ecgstep/images/Ic_grid_on_48px.svg.png')
         # Ports:
         self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#uses',
-                      'ecg_grid_points'))
+                      'http://physiomeproject.org/workflow/1.0/rdf-schema#time_based_electrode_scaffold_positions'))
         self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#provides',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#file_location'))
@@ -48,12 +48,12 @@ class ecgStep(WorkflowStepMountPoint):
         may be connected up to a button in a widget for example.
         """
         self._model = MasterModel(self._location, self._config['identifier'])
-        self._view = MeshGeneratorWidget(self._model, port_data=self._portData0)
+        self._view = MeshGeneratorWidget(self._model, self._portData0)
         self._setCurrentWidget(self._view)
-        self._view.registerDoneExecution(self._myDoneExecution)
+        self._view.registerDoneExecution(self._my_done_execution)
 
-    def _myDoneExecution(self):
-        self._portData0 = self._model.getOutputModelFilename()
+    def _my_done_execution(self):
+        self._portData1 = self._model.getOutputModelFilename()
         self._view = None
         self._model = None
         self._doneExecution()
@@ -68,7 +68,6 @@ class ecgStep(WorkflowStepMountPoint):
         :param dataIn: The data to set for the port at the given index.
         """
         self._portData0 = dataIn # ecg_grid_points
-
 
     def getPortData(self, index):
         """
