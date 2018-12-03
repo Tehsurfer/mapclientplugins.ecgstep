@@ -7,8 +7,8 @@ from opencmiss.zinc.context import Context
 from opencmiss.zinc.material import Material
 
 from mapclientplugins.ecgstep.model.blackfynndatamodel import BlackfynnDataModel
-from mapclientplugins.meshgeneratorstep.model.blackfynnECGgraphics import EcgGraphics
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
+
 
 class MasterModel(object):
 
@@ -92,6 +92,9 @@ class MasterModel(object):
 
     def getBlackfynnDataModel(self):
         return self._blackfynn_data_model
+
+    def get_region(self):
+        return self._region
 
     def getScene(self):
         return self._region.getScene()
