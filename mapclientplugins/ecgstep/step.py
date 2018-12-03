@@ -23,6 +23,7 @@ class ecgStep(WorkflowStepMountPoint):
         self._configured = False # A step cannot be executed until it has been configured.
         self._category = 'Source'
         self._view = None
+        self._model = None
 
         # Add any other initialisation code here:
         self._icon =  QtGui.QImage(':/ecgstep/images/Ic_grid_on_48px.svg.png')
@@ -38,9 +39,7 @@ class ecgStep(WorkflowStepMountPoint):
         self._portData1 = None # http://physiomeproject.org/workflow/1.0/rdf-schema#file_location
 
         # Config:
-        self._config = {}
-        self._config['identifier'] = ''
-        self._config['AutoDone'] = False
+        self._config = {'identifier': ''}
 
     def execute(self):
         """
