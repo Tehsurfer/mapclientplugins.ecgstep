@@ -62,16 +62,16 @@ class BlackfynnDataModel(object):
 
         return dataset
 
-    def getTimeseriesData(self, profile_name, dataset_name, timeseries_name):
+    def getTimeseriesData(self, profile_name, dataset_name, timeseries_name, length):
         for stored_dataset in self._cache[profile_name][dataset_name]:
             if stored_dataset.name == timeseries_name:
                 if stored_dataset.type == 'TimeSeries':
-                    return  self.proecessTimeseriesData(stored_dataset)
+                    return  self.proecessTimeseriesData(stored_dataset, length)
                 if stored_dataset.type == 'Tabular':
-                    return  self.proecessTabularData(stored_dataset)
+                    return  self.proecessTabularData(stored_dataset, length)
 
-    def proecessTimeseriesData(self, stored_dataset):
-        timeseries_dframe = stored_dataset.get_data(length='16s')
+    def proecessTimeseriesData(self, stored_dataset, length):
+        timeseries_dframe = stored_dataset.get_data(length=f'{length}s')
         cache_output = self._create_file_cache(timeseries_dframe)
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []
@@ -79,8 +79,8 @@ class BlackfynnDataModel(object):
             relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6))
         return [cache_output, relative_times]
 
-    def proecessTabularData(self, stored_dataset):
-        timeseries_dframe =stored_dataset.get_data(16*100)
+    def proecessTabularData(self, stored_dataset, length):
+        timeseries_dframe =stored_dataset.get_data(length*100)
 
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []

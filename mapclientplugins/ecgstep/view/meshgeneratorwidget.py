@@ -46,6 +46,9 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.sceneviewer_widget.initializeGL()
         self._makeConnections()
 
+        self.vid = Video(self._model.getVideoPath(), 30)
+        self.plot = None
+        self._ui.sceneviewer_widget.grid = []
 
     def _graphicsInitialized(self):
         """
@@ -277,10 +280,11 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.data = {}
         blackfynnOutput = self._blackfynn_data_model.getTimeseriesData(self._ui.profiles_comboBox.currentText(),
                                                         self._ui.blackfynnDatasets_comboBox.currentText(),
-                                                        self._ui.blackfynnTimeSeries_comboBox.currentText())
+                                                        self._ui.blackfynnTimeSeries_comboBox.currentText(),
+                                                        self.video.videoLength)
         self.data['cache'] = blackfynnOutput[0]
         self.data['times'] = blackfynnOutput[1]
-        # self._exportDataJson()
+        self.plot(self.data)
         self._renderECGMesh()
 
     def _updateBlackfynnUi(self):
@@ -318,6 +322,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         newOffset = self._ui.adjustData_Slider.value()/100
         self.plt.adjustData(newOffset)
         self.vid.line = self.plt.line
+        self.data = self.plt.data
 
     def updatePlot(self, key):
 
@@ -350,6 +355,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
         export_data['times'] = self.data['times']
         with open('ecgDataFull.json', 'w') as fp:
             json.dump(export_data, fp)
+            
+        
 
     def _exportWebGLJson(self):
         '''
@@ -408,6 +415,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     f2 = open(heartPath + 'ecgAnimation.json', 'w')
                     f2.write(content)
                     f2.close()
+                if (i + 1) is 3:
+                    f2 = open(heartPath + 'picking_node_3.json', 'w')
+                    f2.write(content)
+                    f2.close()
                 # f = open(f'webGLExport{i+1}.json', 'w') # for debugging
                 # f.write(content)
             webbrowser.open(htmlIndexPath)
@@ -448,25 +459,19 @@ class MeshGeneratorWidget(QtGui.QWidget):
         if self._ui.sceneviewer_widget.getSceneviewer() is not None:
             self._ui.sceneviewer_widget.viewAll()
 
-    # def keyPressEvent(self, event):
-    #     if event.modifiers() & QtCore.Qt.CTRL and QtGui.QApplication.mouseButtons() == QtCore.Qt.NoButton:
-    #         self._marker_mode_active = True
-    #
-    #         self._ui.sceneviewer_widget._calculatePointOnPlane = types.MethodType(_calculatePointOnPlane, self._ui.sceneviewer_widget)
-    #         self._ui.sceneviewer_widget.mousePressEvent = types.MethodType(mousePressEvent, self._ui.sceneviewer_widget)
-    #         #self._ui.sceneviewer_widget.foundNode = False
-    #         self._model.printLog()
-    #
-    # def keyReleaseEvent(self, event):
-    #     if self._marker_mode_active:
-    #         self._marker_mode_active = False
-    #         self._ui.sceneviewer_widget._calculatePointOnPlane = None
-    #         self._ui.sceneviewer_widget.mousePressEvent = self._original_mousePressEvent
-    #         if self._ui.sceneviewer_widget.foundNode and len(self._ui.sceneviewer_widget.grid) is 2:
-    #             self.updatePlot(self._ui.sceneviewer_widget.nodeKey) # updates plot if a node is clicked
-    #             if self._ui.sceneviewer_widget.nodeKey in self._ecg_graphics.node_corner_list:
-    #                 self._ecg_graphics.updateGrid(self._ui.sceneviewer_widget.nodeKey,  self._ui.sceneviewer_widget.grid[1])
-    #             self._ui.sceneviewer_widget.foundNode = False
+    def keyPressEvent(self, event):
+        if event.modifiers() & QtCore.Qt.CTRL and QtGui.QApplication.mouseButtons() == QtCore.Qt.NoButton:
+            self._marker_mode_active = True
+
+            self._ui.sceneviewer_widget._calculatePointOnPlane = types.MethodType(_calculatePointOnPlane, self._ui.sceneviewer_widget)
+            self._ui.sceneviewer_widget.mousePressEvent = types.MethodType(mousePressEvent, self._ui.sceneviewer_widget)
+            self._model.printLog()
+
+    def keyReleaseEvent(self, event):
+        if self._marker_mode_active:
+            self._marker_mode_active = False
+            self._ui.sceneviewer_widget._calculatePointOnPlane = None
+            self._ui.sceneviewer_widget.mousePressEvent = self._original_mousePressEvent
 
 
 
@@ -490,14 +495,6 @@ def mousePressEvent(self, event):
         self._calculatePointOnPlane = None
         self.mousePressEvent = self.original_mousePressEvent
 
-        if len(self.grid) > 2 and self.foundNode:
-            self.grid = []
-            self.foundNode = False
-        self.grid.append(point_on_plane)
-
-        if len(self.grid) > 4:
-            self.grid = []
-
     return [event.x(), event.y()]
 
 
@@ -506,11 +503,14 @@ def _calculatePointOnPlane(self, x, y):
 
     far_plane_point = self.unproject(x, -y, -1.0)
     near_plane_point = self.unproject(x, -y, 1.0)
-    plane_point, plane_normal = self._model.getPlaneDescription()
+    plane_point, plane_offset, plane_normal = self._model.getPlaneDescription()
     point_on_plane = calculateLinePlaneIntersection(near_plane_point, far_plane_point, plane_point, plane_normal)
-    self.plane_normal = plane_normal
-    print(point_on_plane)
-    print(f'normal: {plane_normal}')
+    # if len(self.grid) < 4:
+    #     self.grid.append(point_on_plane)
+    # else:
+    #     self.grid = []
+    #     self.grid.append(point_on_plane)
     return point_on_plane
+
 
 
