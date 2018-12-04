@@ -414,4 +414,4 @@ class Ui_MeshGeneratorWidget(object):
         self.done_button.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Done", None, QtGui.QApplication.UnicodeUTF8))
 
 from opencmiss.zincwidgets.alignmentsceneviewerwidget import AlignmentSceneviewerWidget
-#from mapclientplugins.meshgeneratorstep import resources_rc
+from mapclientplugins.ecgstep import resources_rc

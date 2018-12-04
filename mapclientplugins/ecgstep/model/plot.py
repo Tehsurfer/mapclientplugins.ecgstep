@@ -6,6 +6,7 @@ class Plot:
         self.line = None
         self.datalen = 1
         self.data = data
+        self.plotData(data)
 
     def plotJson(self, filename):
         with open(str(filename), 'r') as fp:
@@ -24,7 +25,7 @@ class Plot:
         self.data = data
 
         self.pw = pg.plot(data['times'],
-                          data['cache'][next(iter(data))],
+                          data['cache'][next(iter(data['cache']))],
                           pen='b')
         self.line = self.pw.addLine(x=0, pen='r')
         self.datalen = max(data['times'])
@@ -36,6 +37,6 @@ class Plot:
 
         self.pw.clear()
         self.pw.plot(newTimes,
-                          self.data['cache'][next(iter(self.data))],
+                          self.data['cache'][next(iter(self.data['cache']))],
                           pen='b')
         self.line = self.pw.addLine(x=0, pen='r')

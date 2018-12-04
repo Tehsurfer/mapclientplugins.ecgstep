@@ -31,7 +31,7 @@ class BlackfynnDataModel(object):
     def _getBlackfynn(self, profile_name):
         api_key = self._settings[profile_name]['api_token']
         api_secret = self._settings[profile_name]['api_secret']
-        print('[{0}]:[{1}]'.format(api_key, api_secret))
+        # print('[{0}]:[{1}]'.format(api_key, api_secret))
         self._bf = Blackfynn(api_token=api_key, api_secret=api_secret)
         return self._bf
 
@@ -71,7 +71,7 @@ class BlackfynnDataModel(object):
                     return  self.proecessTabularData(stored_dataset, length)
 
     def proecessTimeseriesData(self, stored_dataset, length):
-        timeseries_dframe = stored_dataset.get_data(length=f'{length}s')
+        timeseries_dframe = stored_dataset.get_data(length='{0}s'.format(length))
         cache_output = self._create_file_cache(timeseries_dframe)
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []
@@ -94,12 +94,6 @@ class BlackfynnDataModel(object):
         cache_output = self._create_file_cache(timeseries_dframe)
         return [cache_output, relative_times]
 
-
-        pass
-
-
-
-
     def _create_file_cache(self, data_frame):
 
         cache_dictionary = {}
@@ -109,7 +103,6 @@ class BlackfynnDataModel(object):
                 cache_dictionary[key] = data_frame[key].values.tolist()
 
         return cache_dictionary
-
 
     def uploadRender(self, filePath):
         # uploadRender: Takes a given file path and uploads it to blackfynn in a folder called 'Zinc Exports' for the
@@ -127,4 +120,3 @@ class BlackfynnDataModel(object):
     def setSettings(self, settings):
         print('set settings {0}',format(settings))
         self._settings.update(settings)
-

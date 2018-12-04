@@ -267,7 +267,7 @@ class Ui_MeshGeneratorWidget(object):
         self.blackfynnTimeSeries_pushButton.setToolTip(QtGui.QApplication.translate("MeshGeneratorWidget", "Retrieve time series", None, QtGui.QApplication.UnicodeUTF8))
         self.blackfynnDatasets_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Datasets:", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Export for WebGL", None, QtGui.QApplication.UnicodeUTF8))
-        self.exportDirectory_lineEdit.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "C:\\Users\\jkho021\\Projects\\MPB", None, QtGui.QApplication.UnicodeUTF8))
+        self.exportDirectory_lineEdit.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "", None, QtGui.QApplication.UnicodeUTF8))
         self.blackfynnTimeSeries_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Time series:", None, QtGui.QApplication.UnicodeUTF8))
         self.blackfynnDatasets_pushButton.setToolTip(QtGui.QApplication.translate("MeshGeneratorWidget", "Retrieve datasets", None, QtGui.QApplication.UnicodeUTF8))
         self.UploadToBlackfynn_button.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Upload to Blackfynn", None, QtGui.QApplication.UnicodeUTF8))

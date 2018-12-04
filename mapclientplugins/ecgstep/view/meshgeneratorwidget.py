@@ -24,7 +24,7 @@ from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
 
 class MeshGeneratorWidget(QtGui.QWidget):
 
-    def __init__(self, model, node_coordinates_data, parent=None):
+    def __init__(self, model, node_coordinates_data, export_directory, parent=None):
         super(MeshGeneratorWidget, self).__init__(parent)
         self._ui = Ui_MeshGeneratorWidget()
         self._model = model
@@ -32,6 +32,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._model.registerFrameIndexUpdateCallback(self._updateFrameIndex)
 
         self._ui.setupUi(self)
+        self._export_directory = export_directory
         self._doneCallback = None
         self._marker_mode_active = False
         self._have_images = False
@@ -39,6 +40,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.time = 0
         self.pw = None
         self._node_coordinates_data = node_coordinates_data
+        self._time_sequence = node_coordinates_data['time_array']
 
         self._blackfynn_data_model = model.getBlackfynnDataModel()
         self._ui.sceneviewer_widget.setContext(model.getContext())
@@ -46,7 +48,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.sceneviewer_widget.initializeGL()
         self._makeConnections()
 
-        self.vid = Video(self._model.getVideoPath(), 30)
+        self.video = Video(self._model.getVideoPath(), 30)
         self.plot = None
         self._ui.sceneviewer_widget.grid = []
 
@@ -140,7 +142,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _updateTimeValue(self, value):
         self._ui.timeValue_doubleSpinBox.blockSignals(True)
-        max_time_value = NUMBER_OF_FRAMES / self._ui.framesPerSecond_spinBox.value()
+        max_time_value = self.video.videoLength
         self.time = self._model._current_time
 
         if value > max_time_value:
@@ -200,9 +202,9 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     ecg_mmatrix.append(self.data['cache'][key][0::10])
             for i in range(len(ecg_mmatrix)):
                 ecg_mmatrix[i].append(ecg_mmatrix[i][-1])
-            ecg_times = np.linspace(0, 1, len(ecg_mmatrix[:][0]))
+            # ecg_times = np.linspace(0, 1, len(ecg_mmatrix[:][0]))
 
-            self._pm.set_data_time_sequence(ecg_times.tolist())
+            self._pm.set_data_time_sequence(self._time_sequence)
             self._pm.set_data(ecg_mmatrix)
 
         self._pm.generate_mesh()
@@ -284,7 +286,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
                                                         self.video.videoLength)
         self.data['cache'] = blackfynnOutput[0]
         self.data['times'] = blackfynnOutput[1]
-        self.plot(self.data)
+        self.plot = Plot(self.data)
         self._renderECGMesh()
 
     def _updateBlackfynnUi(self):
@@ -312,17 +314,17 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _playVideo(self):
         if self.data:
-            self.plt = Plot('ecgDataFull.json')
             self.vid = Video(self._model.getVideoPath(), 30)
             self._adjustData()
-            self.vid.line = self.plt.line
-            self.vid.datalen = self.plt.datalen
+            self.vid.line = self.plot.line
+            self.vid.datalen = self.plot.datalen
             self.vid.playVideo()
+
     def _adjustData(self):
         newOffset = self._ui.adjustData_Slider.value()/100
-        self.plt.adjustData(newOffset)
-        self.vid.line = self.plt.line
-        self.data = self.plt.data
+        self.plot.adjustData(newOffset)
+        self.vid.line = self.plot.line
+        self.data = self.plot.data
 
     def updatePlot(self, key):
 
@@ -357,10 +359,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
             json.dump(export_data, fp)
 
     def _exportWebGLJson(self):
-        '''
-            Export graphics into JSON formats. Returns an array containing the
-       string buffers for each export
-            '''
+        """
+        Export graphics into JSON formats. Returns an array containing the
+        string buffers for each export
+        """
 
         try:
             self.data
@@ -368,11 +370,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
             # Scale down our data (every 10th value) for exporting
             ECGmatrix = []
             for key in self.data['cache']:
-                if 'time' not in key:
-                    ECGmatrix.append(self.data['cache'][key][0::10])
+                ECGmatrix.append(self.data['cache'][key][0::100])
             for i in range(len(ECGmatrix)):
                 ECGmatrix[i].append(ECGmatrix[i][-1])
-            ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
+            ECGtimes = np.linspace(self._time_sequence[0], self._time_sequence[-1], len(ECGmatrix[:][0]))
 
             # Set up our scene resource
             ecg_region = self._model._region.findChildByName('ecg_plane')
@@ -383,6 +384,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             sceneSR.setFinishTime(ECGtimes[-1])
             sceneSR.setNumberOfTimeSteps(len(ECGtimes))
             sceneSR.setOutputTimeDependentColours(1)
+            sceneSR.setOutputTimeDependentVertices(1)
 
             # Get the total number of graphics in a scene/region that can be exported
             number = sceneSR.getNumberOfResourcesRequired()
@@ -396,11 +398,11 @@ class MeshGeneratorWidget(QtGui.QWidget):
             # Store all the resources in a buffer
             buffer = [resources[i].getBuffer()[1] for i in range(number)]
 
-            mpbPath = self._ui.exportDirectory_lineEdit.text()
+            mpbPath = self._export_directory
 
             # Write the files to directories for the MPB to read.
             # Find it at https://github.com/Tehsurfer/MPB
-            heartPath = mpbPath + '\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
+            heartPath = mpbPath
             htmlIndexPath = mpbPath + '\simple_heart\\index.html'
             for i, content in enumerate(buffer):
                 if content is None:
@@ -417,8 +419,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     f2 = open(heartPath + 'picking_node_3.json', 'w')
                     f2.write(content)
                     f2.close()
-                # f = open(f'webGLExport{i+1}.json', 'w') # for debugging
-                # f.write(content)
+                f = open(heartPath + '\webGLExport'+ str(i+1) + '.json', 'w') # for debugging
+                f.write(content)
             webbrowser.open(htmlIndexPath)
         except:
             pass
@@ -430,9 +432,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             '''
 
         try:
-            self.data
-
-            mpbPath = self._ui.exportDirectory_lineEdit.text()
+            mpbPath = self._export_directory
 
             # Write the files to directories for the MPB to read.
             # Find it at https://github.com/Tehsurfer/MPB

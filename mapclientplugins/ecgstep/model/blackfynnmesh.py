@@ -10,9 +10,10 @@ from opencmiss.zinc.element import Element, Elementbasis
 from opencmiss.zinc.field import Field
 from opencmiss.zinc.node import Node
 from opencmiss.zinc.glyph import Glyph
+from mapclientplugins.ecgstep.model.meshalignmentmodel import MeshAlignmentModel
 
 
-class BlackfynnMesh(object):
+class BlackfynnMesh(MeshAlignmentModel):
     """
     BlackfynnMesh is the central point for generating the model for our mesh and drawing it
     """
@@ -192,9 +193,9 @@ class BlackfynnMesh(object):
 
         nodePointAttr = nodePoints.getGraphicspointattributes()
         nodePointAttr.setGlyphShapeType(Glyph.SHAPE_TYPE_SPHERE)
-        nodePointAttr.setBaseSize([.02, .02, .02])
-        cmiss_number = fm.findFieldByName('cmiss_number')
-        nodePointAttr.setLabelField(cmiss_number)
+        nodePointAttr.setBaseSize([5, 5, 5])
+        # cmiss_number = fm.findFieldByName('cmiss_number')
+        # nodePointAttr.setLabelField(cmiss_number)
 
         surfaces = scene.createGraphicsSurfaces()
         surfaces.setCoordinateField(coordinates)
