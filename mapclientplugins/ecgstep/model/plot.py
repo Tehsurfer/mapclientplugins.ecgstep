@@ -2,10 +2,10 @@ import json
 import pyqtgraph as pg
 
 class Plot:
-    def __init__(self, dataFilename):
+    def __init__(self, data):
         self.line = None
         self.datalen = 1
-        self.plotJson(dataFilename)
+        self.data = data
 
     def plotJson(self, filename):
         with open(str(filename), 'r') as fp:

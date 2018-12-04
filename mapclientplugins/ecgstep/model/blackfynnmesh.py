@@ -49,7 +49,7 @@ class BlackfynnMesh(object):
 
         # We currently find the number of elements by taking the square root of the number of given points
         elements_count_across = 7
-        elements_count_up = 5
+        elements_count_up = 7
         use_cross_derivatives = 0
 
         # Set up our coordinate field
@@ -249,6 +249,13 @@ class BlackfynnMesh(object):
         #
         #     spectrum_point_attr.setGlyph(colour_bar)
         #     spectrum_point_attr.setBaseSize([.3, .4, ])
+
+        # tessellationmodule = self._context.getTessellationmodule()
+        # fineTessellation = tessellationmodule.createTessellation()
+        # fineTessellation.setName('fine')  # name it so it can be found by name later
+        # fineTessellation.setManaged(True)  # manage its lifetime so it is kept even if not being used
+        # fineTessellation.setMinimumDivisions(8)  # divide element edges into 8 line segments
+        # isosurfaces.setTessellation(fineTessellation)
 
         scene.endChange()
 
