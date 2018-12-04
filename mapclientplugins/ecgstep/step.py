@@ -43,7 +43,7 @@ class ecgStep(WorkflowStepMountPoint):
         self._portData2 = None # http://physiomeproject.org/workflow/1.0/rdf-schema#file_location
 
         # Config:
-        self._config = {'identifier': '', 'AutoDone': False}
+        self._config = {'identifier': ''}
 
     def execute(self):
         """

@@ -24,7 +24,7 @@ class BlackfynnDataModel(object):
         return self._settings['active-profile']
 
     def getExistingProfileNames(self):
-        profile_names = [*self._settings]
+        profile_names = self._settings.keys()
         profile_names.remove('active-profile')
         return profile_names
 

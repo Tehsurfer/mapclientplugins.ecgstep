@@ -322,7 +322,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def updatePlot(self, key):
 
         try:
-            self.data['cache'][f'LG{key}']
+            self.data['cache']['LG{0}'.format(key)]
         except KeyError:
             print('ERROR: selected data could not be found')
             self.pw.plot(title='Error in data collection')
@@ -330,11 +330,11 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.pw.clear()
 
         self.pw.plot(self.data['x'],
-                     self.data['cache'][f'LG{key}'],
+                     self.data['cache']['LG{0}'.format(key)],
                      pen='b',
-                     title=f'EEG values from {key} LG{key}',
+                     title='EEG values from {0} LG{0}'.format(key),
                      )
-        self.pw.setTitle(f'EEG values from {key} (LG{key})')
+        self.pw.setTitle('EEG values from {0} (LG{0})'.format(key))
         self.line = self.pw.addLine(x=self.time,
                                     pen='r')  # show current time
 
@@ -480,7 +480,7 @@ def mousePressEvent(self, event):
         print('Location of click (x,y): (' + str(event.x()) + ', ' + str(event.y()) +')')
         node = self.getNearestNode(event.x(), event.y())
         if node.isValid():
-            print(f'node {node.getIdentifier()} was clicked')
+            print('node {0} was clicked'.format(node.getIdentifier()))
             self.foundNode = True
             self.nodeKey = node.getIdentifier()
             self.node = node
@@ -510,7 +510,7 @@ def _calculatePointOnPlane(self, x, y):
     point_on_plane = calculateLinePlaneIntersection(near_plane_point, far_plane_point, plane_point, plane_normal)
     self.plane_normal = plane_normal
     print(point_on_plane)
-    print(f'normal: {plane_normal}')
+    print('normal: {0}'.format(plane_normal))
     return point_on_plane
 
 
