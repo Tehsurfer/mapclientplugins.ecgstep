@@ -199,10 +199,12 @@ class MeshGeneratorWidget(QtGui.QWidget):
             ecg_mmatrix = []
             for key in self.data['cache']:
                 if 'time' not in key:
-                    ecg_mmatrix.append(self.data['cache'][key][0::10])
+                    ecg_mmatrix.append(self.data['cache'][key][0::24])
             for i in range(len(ecg_mmatrix)):
                 ecg_mmatrix[i].append(ecg_mmatrix[i][-1])
             # ecg_times = np.linspace(0, 1, len(ecg_mmatrix[:][0]))
+
+
 
             self._pm.set_data_time_sequence(self._time_sequence)
             self._pm.set_data(ecg_mmatrix)

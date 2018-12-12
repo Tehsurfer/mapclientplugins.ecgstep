@@ -80,7 +80,7 @@ class BlackfynnDataModel(object):
         return [cache_output, relative_times]
 
     def proecessTabularData(self, stored_dataset, length):
-        timeseries_dframe =stored_dataset.get_data(length*100)
+        timeseries_dframe =stored_dataset.get_data(12697)
 
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []

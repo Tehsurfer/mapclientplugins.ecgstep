@@ -59,7 +59,7 @@ class Video :
     def loadVideo(self, filename):
         self.cap = cv2.VideoCapture(filename)
         self.numFrames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        self.videoLength = self.numFrames*self.frameRate
+        self.videoLength = self.numFrames/self.frameRate
         imageList = list()
         while not self.cap.isOpened():
             selfcap = cv2.VideoCapture(filename)
