@@ -10,147 +10,157 @@ from opencmiss.zinc.element import Element, Elementbasis
 from opencmiss.zinc.field import Field
 from opencmiss.zinc.node import Node
 from opencmiss.zinc.glyph import Glyph
+from mapclientplugins.ecgstep.model.meshalignmentmodel import MeshAlignmentModel
 
 
-class BlackfynnMesh(object):
+class BlackfynnMesh(MeshAlignmentModel):
     """
     BlackfynnMesh is the central point for generating the model for our mesh and drawing it
     """
 
-    def __init__(self, region, node_coordinate_list):
+    def __init__(self, region, time_based_node_description):
         super(BlackfynnMesh, self).__init__()
         self._mesh_group = []
         self._field_element_group = None
         self._coordinates = None
-        self._time_sequence = []
+        self._data_time_sequence = []
+        self._data = []
 
         ecg_region = region.findChildByName('ecg_plane')
         if ecg_region.isValid():
             region.removeChild(ecg_region)
 
         self._region = region.createChild('ecg_plane')
-        self._node_coordinate_list = node_coordinate_list
+        self._time_based_node_description = time_based_node_description
 
         # Note that these are normally changed before generating the mesh
+
+    def set_data_time_sequence(self, data_time_sequence):
+        self._data_time_sequence = data_time_sequence
+
+    def set_data(self, data):
+        self._data = data
 
     def generate_mesh(self):
         """
         generateMesh: This is where all points, elements, and colour fields relating to them are defined
         """
-        coordinateDimensions = 3
-        self.number_points = len(self._node_coordinate_list)
+        coordinate_dimensions = 3
+        # self.number_points = len(self._node_coordinate_list)
 
         # We currently find the number of elements by taking the square root of the number of given points
-        elementsCount1 = int((self.number_points**.5) - 1)
-        elementsCount2 = int((self.number_points**.5) - 1)
-        useCrossDerivatives = 0
+        elements_count_across = 7
+        elements_count_up = 7
+        use_cross_derivatives = 0
 
         # Set up our coordinate field
-        fm = self._region.getFieldmodule()
-        fm.beginChange()
-        coordinates = fm.createFieldFiniteElement(coordinateDimensions)
+        field_module = self._region.getFieldmodule()
+        field_module.beginChange()
+        coordinates = field_module.createFieldFiniteElement(coordinate_dimensions)
         coordinates.setName('coordinates')
         coordinates.setManaged(True)
         coordinates.setTypeCoordinate(True)
         coordinates.setCoordinateSystemType(Field.COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN)
         coordinates.setComponentName(1, 'x')
         coordinates.setComponentName(2, 'y')
-        if coordinateDimensions == 3:
+        if coordinate_dimensions == 3:
             coordinates.setComponentName(3, 'z')
 
         # Set up our node template
-        nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
-        nodetemplate = nodes.createNodetemplate()
-        nodetemplate.defineField(coordinates)
-        nodetemplate.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_VALUE, 1)
-        nodetemplate.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_D_DS1, 1)
-        nodetemplate.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_D_DS2, 1)
-        if useCrossDerivatives:
-            nodetemplate.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_D2_DS1DS2, 1)
+        nodes = field_module.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+        node_template = nodes.createNodetemplate()
+        node_template.defineField(coordinates)
+        node_template.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_VALUE, 1)
+        node_template.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_D_DS1, 1)
+        node_template.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_D_DS2, 1)
+        if use_cross_derivatives:
+            node_template.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_D2_DS1DS2, 1)
 
-        mesh = fm.findMeshByDimension(2)
+        mesh = field_module.findMeshByDimension(2)
 
         # Create our mesh subgroup
-        fieldGroup = fm.createFieldGroup()
+        fieldGroup = field_module.createFieldGroup()
         fieldElementGroup = fieldGroup.createFieldElementGroup(mesh)
         fieldElementGroup.setManaged(True)
         meshGroup = fieldElementGroup.getMeshGroup()
 
         # Define our interpolation
-        bicubicHermiteBasis = fm.createElementbasis(2, Elementbasis.FUNCTION_TYPE_CUBIC_HERMITE)
-        bilinearBasis = fm.createElementbasis(2, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
+        bicubicHermiteBasis = field_module.createElementbasis(2, Elementbasis.FUNCTION_TYPE_CUBIC_HERMITE)
+        bilinearBasis = field_module.createElementbasis(2, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
 
         # Set up our element templates
         eft = meshGroup.createElementfieldtemplate(bicubicHermiteBasis)
-        eftBilinear = meshGroup.createElementfieldtemplate(bilinearBasis)
-        if not useCrossDerivatives:
+        eft_bi_linear = meshGroup.createElementfieldtemplate(bilinearBasis)
+        if not use_cross_derivatives:
             for n in range(4):
                 eft.setFunctionNumberOfTerms(n*4 + 4, 0)
-        elementtemplate = meshGroup.createElementtemplate()
-        elementtemplate.setElementShapeType(Element.SHAPE_TYPE_SQUARE)
-        result = elementtemplate.defineField(coordinates, -1, eft)
+        element_template = meshGroup.createElementtemplate()
+        element_template.setElementShapeType(Element.SHAPE_TYPE_SQUARE)
+        element_template.defineField(coordinates, -1, eft)
 
         # Create our spectrum colour field
-        colour = fm.createFieldFiniteElement(1)
+        colour = field_module.createFieldFiniteElement(1)
         colour.setName('colour2')
         colour.setManaged(True)
 
         # add time support for colour field
 
         # Create node and element templates for our spectrum colour field
-        nodetemplate.defineField(colour)
-        nodetemplate.setValueNumberOfVersions(colour, -1, Node.VALUE_LABEL_VALUE, 1)
-        result = elementtemplate.defineField(colour, -1, eftBilinear)
+        node_template.defineField(colour)
+        node_template.setValueNumberOfVersions(colour, -1, Node.VALUE_LABEL_VALUE, 1)
+        element_template.defineField(colour, -1, eft_bi_linear)
 
-        timeSequence = fm.getMatchingTimesequence(self._time_sequence)
-        nodetemplate.setTimesequence(colour, timeSequence)
+        node_time_sequence = self._time_based_node_description['time_array']
+        zinc_node_time_sequence = field_module.getMatchingTimesequence(node_time_sequence)
+        node_template.setTimesequence(coordinates, zinc_node_time_sequence)
+        zinc_data_time_sequence = field_module.getMatchingTimesequence(self._data_time_sequence)
+        node_template.setTimesequence(colour, zinc_data_time_sequence)
 
-        eegGrid = []
-        for coord in self._node_coordinate_list:
-            eegGrid.append(coord)
-
-        firstNodeNumber = 1
+        first_node_number = 1
 
         # create nodes
-        cache = fm.createFieldcache()
-        nodeIdentifier = firstNodeNumber
+        cache = field_module.createFieldcache()
+        node_identifier = first_node_number
         x = [0.0, 0.0, 0.0]
         dx_ds1 = [0.0, 0.0, 0.0]
         dx_ds2 = [0.0, 0.0, 0.0]
         zero = [0.0, 0.0, 0.0]
         i = 0
-        for n2 in range(elementsCount2 + 1):
-            for n1 in range(elementsCount1 + 1):
+        for n2 in range(elements_count_up + 1):
+            for n1 in range(elements_count_across + 1):
 
-                node = nodes.createNode(nodeIdentifier, nodetemplate)
+                node = nodes.createNode(node_identifier, node_template)
                 cache.setNode(node)
 
+                node_locations = self._time_based_node_description['{0}'.format(node_identifier)]
                 # Assign the new node its position
-                coordinates.setNodeParameters(cache, -1, Node.VALUE_LABEL_VALUE, 1, eegGrid[i])
-                coordinates.setNodeParameters(cache, -1, Node.VALUE_LABEL_D_DS1, 1, dx_ds1)
-                coordinates.setNodeParameters(cache, -1, Node.VALUE_LABEL_D_DS2, 1, dx_ds2)
-                if useCrossDerivatives:
+                for index, time in enumerate(node_time_sequence):
+                    cache.setTime(time)
+                    coordinates.setNodeParameters(cache, -1, Node.VALUE_LABEL_VALUE, 1, node_locations[index])
+                # coordinates.setNodeParameters(cache, -1, Node.VALUE_LABEL_D_DS1, 1, dx_ds1)
+                # coordinates.setNodeParameters(cache, -1, Node.VALUE_LABEL_D_DS2, 1, dx_ds2)
+                if use_cross_derivatives:
                     coordinates.setNodeParameters(cache, -1, Node.VALUE_LABEL_D2_DS1DS2, 1, zero)
 
                 # Assign the new node its colour for each time step
-                for j, time in enumerate(self._time_sequence):
+                for index, time in enumerate(self._data_time_sequence):
                     cache.setTime(time)
-                    colour_value = self.ECGcoloursMatrix[i % len(self.ECGcoloursMatrix)][j]
+                    colour_value = self._data[i % len(self._data)][index]
                     colour.setNodeParameters(cache, -1, Node.VALUE_LABEL_VALUE, 1, colour_value)
 
-                nodeIdentifier = nodeIdentifier + 1
+                node_identifier = node_identifier + 1
                 i += 1
 
         # create elements
-        elementIdentifier = firstNodeNumber
-        no2 = (elementsCount1 + 1)
-        for e2 in range(elementsCount2):
-            for e1 in range(elementsCount1):
-                element = meshGroup.createElement(elementIdentifier, elementtemplate)
-                bni = e2 * no2 + e1 + firstNodeNumber
+        elementIdentifier = first_node_number
+        no2 = (elements_count_across + 1)
+        for e2 in range(elements_count_up):
+            for e1 in range(elements_count_across):
+                element = meshGroup.createElement(elementIdentifier, element_template)
+                bni = e2 * no2 + e1 + first_node_number
                 nodeIdentifiers = [bni, bni + 1, bni + no2, bni + no2 + 1]
                 result = element.setNodesByIdentifier(eft, nodeIdentifiers)
-                result = element.setNodesByIdentifier(eftBilinear, nodeIdentifiers)
+                result = element.setNodesByIdentifier(eft_bi_linear, nodeIdentifiers)
                 elementIdentifier = elementIdentifier + 1
 
         # Set fields for later access
@@ -158,7 +168,7 @@ class BlackfynnMesh(object):
         self._field_element_group = fieldElementGroup
         self._coordinates = coordinates
 
-        fm.endChange()
+        field_module.endChange()
 
     def drawMesh(self):
 
@@ -183,7 +193,9 @@ class BlackfynnMesh(object):
 
         nodePointAttr = nodePoints.getGraphicspointattributes()
         nodePointAttr.setGlyphShapeType(Glyph.SHAPE_TYPE_SPHERE)
-        nodePointAttr.setBaseSize([.02, .02, .02])
+        nodePointAttr.setBaseSize([5, 5, 5])
+        # cmiss_number = fm.findFieldByName('cmiss_number')
+        # nodePointAttr.setLabelField(cmiss_number)
 
         surfaces = scene.createGraphicsSurfaces()
         surfaces.setCoordinateField(coordinates)
@@ -238,6 +250,13 @@ class BlackfynnMesh(object):
         #
         #     spectrum_point_attr.setGlyph(colour_bar)
         #     spectrum_point_attr.setBaseSize([.3, .4, ])
+
+        # tessellationmodule = self._context.getTessellationmodule()
+        # fineTessellation = tessellationmodule.createTessellation()
+        # fineTessellation.setName('fine')  # name it so it can be found by name later
+        # fineTessellation.setManaged(True)  # manage its lifetime so it is kept even if not being used
+        # fineTessellation.setMinimumDivisions(8)  # divide element edges into 8 line segments
+        # isosurfaces.setTessellation(fineTessellation)
 
         scene.endChange()
 

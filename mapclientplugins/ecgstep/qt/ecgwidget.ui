@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>927</width>
-    <height>829</height>
+    <height>789</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -76,8 +76,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>468</width>
-            <height>427</height>
+            <width>472</width>
+            <height>409</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -139,6 +139,99 @@
               </widget>
              </item>
              <item>
+              <widget class="QGroupBox" name="groupBox_2">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>234</height>
+                </size>
+               </property>
+               <property name="title">
+                <string>Adjust Data</string>
+               </property>
+               <widget class="QSlider" name="adjustData_Slider">
+                <property name="geometry">
+                 <rect>
+                  <x>20</x>
+                  <y>50</y>
+                  <width>431</width>
+                  <height>22</height>
+                 </rect>
+                </property>
+                <property name="autoFillBackground">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>-200</number>
+                </property>
+                <property name="maximum">
+                 <number>200</number>
+                </property>
+                <property name="singleStep">
+                 <number>1</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="invertedAppearance">
+                 <bool>false</bool>
+                </property>
+               </widget>
+               <widget class="QLabel" name="label_3">
+                <property name="geometry">
+                 <rect>
+                  <x>410</x>
+                  <y>70</y>
+                  <width>55</width>
+                  <height>16</height>
+                 </rect>
+                </property>
+                <property name="text">
+                 <string>+2s</string>
+                </property>
+               </widget>
+               <widget class="QLabel" name="label_4">
+                <property name="geometry">
+                 <rect>
+                  <x>30</x>
+                  <y>70</y>
+                  <width>55</width>
+                  <height>16</height>
+                 </rect>
+                </property>
+                <property name="text">
+                 <string>-2s</string>
+                </property>
+               </widget>
+               <widget class="QPushButton" name="pushButton_3">
+                <property name="geometry">
+                 <rect>
+                  <x>60</x>
+                  <y>170</y>
+                  <width>201</width>
+                  <height>24</height>
+                 </rect>
+                </property>
+                <property name="text">
+                 <string>View data with video</string>
+                </property>
+               </widget>
+               <widget class="QPushButton" name="viewVideo_button">
+                <property name="geometry">
+                 <rect>
+                  <x>180</x>
+                  <y>90</y>
+                  <width>121</width>
+                  <height>24</height>
+                 </rect>
+                </property>
+                <property name="text">
+                 <string>View Video</string>
+                </property>
+               </widget>
+              </widget>
+             </item>
+             <item>
               <widget class="QGroupBox" name="video_groupBox">
                <property name="title">
                 <string>Video:</string>
@@ -161,13 +254,6 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="framesPerSecond_label">
-                  <property name="text">
-                   <string>Frames per second:</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="1">
                  <widget class="QSpinBox" name="frameIndex_spinBox">
                   <property name="minimum">
@@ -175,6 +261,13 @@
                   </property>
                   <property name="maximum">
                    <number>10000</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="framesPerSecond_label">
+                  <property name="text">
+                   <string>Frames per second:</string>
                   </property>
                  </widget>
                 </item>
@@ -264,10 +357,17 @@
             </layout>
            </widget>
           </item>
-          <item row="1" column="3">
-           <widget class="QPushButton" name="blackfynnDatasets_pushButton">
+          <item row="5" column="2">
+           <widget class="QPushButton" name="downloadData_button">
+            <property name="text">
+             <string>Download Data</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QPushButton" name="blackfynnTimeSeries_pushButton">
             <property name="toolTip">
-             <string>Retrieve datasets</string>
+             <string>Retrieve time series</string>
             </property>
             <property name="text">
              <string/>
@@ -275,6 +375,16 @@
             <property name="icon">
              <iconset>
               <normaloff>:/meshgeneratorstep/images/download-icon-blue.png</normaloff>:/meshgeneratorstep/images/download-icon-blue.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QComboBox" name="blackfynnDatasets_comboBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
            </widget>
           </item>
@@ -295,27 +405,17 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
-           <widget class="QComboBox" name="blackfynnDatasets_comboBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>1</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+          <item row="6" column="2">
+           <widget class="QPushButton" name="pushButton">
+            <property name="text">
+             <string>Export for WebGL</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="3">
-           <widget class="QPushButton" name="blackfynnTimeSeries_pushButton">
-            <property name="toolTip">
-             <string>Retrieve time series</string>
-            </property>
+          <item row="8" column="2">
+           <widget class="QLineEdit" name="exportDirectory_lineEdit">
             <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>:/meshgeneratorstep/images/download-icon-blue.png</normaloff>:/meshgeneratorstep/images/download-icon-blue.png</iconset>
+             <string>C:\Users\jkho021\Projects\MPB</string>
             </property>
            </widget>
           </item>
@@ -326,24 +426,24 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="2">
-           <widget class="QPushButton" name="pushButton">
+          <item row="1" column="3">
+           <widget class="QPushButton" name="blackfynnDatasets_pushButton">
+            <property name="toolTip">
+             <string>Retrieve datasets</string>
+            </property>
             <property name="text">
-             <string>Export for WebGL</string>
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>:/meshgeneratorstep/images/download-icon-blue.png</normaloff>:/meshgeneratorstep/images/download-icon-blue.png</iconset>
             </property>
            </widget>
           </item>
           <item row="7" column="2">
-           <widget class="QLineEdit" name="exportDirectory_lineEdit">
+           <widget class="QPushButton" name="pushButton_2">
             <property name="text">
-             <string>C:\Users\jkho021\Projects\MPB</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="2">
-           <widget class="QPushButton" name="downloadData_button">
-            <property name="text">
-             <string>Download Data</string>
+             <string>Upload to Blackfynn</string>
             </property>
            </widget>
           </item>
@@ -420,7 +520,6 @@
  </customwidgets>
  <resources>
   <include location="resources.qrc"/>
-  <include location="../../../../../../../SPARC/plugins/mapclientplugins.meshgeneratorstep/mapclientplugins/meshgeneratorstep/qt/resources.qrc"/>
  </resources>
  <connections/>
 </ui>

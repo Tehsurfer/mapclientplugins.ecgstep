@@ -24,14 +24,14 @@ class BlackfynnDataModel(object):
         return self._settings['active-profile']
 
     def getExistingProfileNames(self):
-        profile_names = [*self._settings]
+        profile_names = self._settings.keys()
         profile_names.remove('active-profile')
         return profile_names
 
     def _getBlackfynn(self, profile_name):
         api_key = self._settings[profile_name]['api_token']
         api_secret = self._settings[profile_name]['api_secret']
-        print('[{0}]:[{1}]'.format(api_key, api_secret))
+        # print('[{0}]:[{1}]'.format(api_key, api_secret))
         self._bf = Blackfynn(api_token=api_key, api_secret=api_secret)
         return self._bf
 
@@ -62,28 +62,47 @@ class BlackfynnDataModel(object):
 
         return dataset
 
-    def getTimeseriesData(self, profile_name, dataset_name, timeseries_name):
+    def getTimeseriesData(self, profile_name, dataset_name, timeseries_name, length):
         for stored_dataset in self._cache[profile_name][dataset_name]:
             if stored_dataset.name == timeseries_name:
-                timeseries_dframe = stored_dataset.get_data(length='16s')
+                if stored_dataset.type == 'TimeSeries':
+                    return  self.proecessTimeseriesData(stored_dataset, length)
+                if stored_dataset.type == 'Tabular':
+                    return  self.proecessTabularData(stored_dataset, length)
 
+    def proecessTimeseriesData(self, stored_dataset, length):
+        timeseries_dframe = stored_dataset.get_data(length='{0}s'.format(length))
         cache_output = self._create_file_cache(timeseries_dframe)
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []
         for time in absolute_timeseries_values:
-            relative_times.append( round( time.timestamp() - absolute_timeseries_values[0].timestamp(), 6) )
+            relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6))
         return [cache_output, relative_times]
 
+    def proecessTabularData(self, stored_dataset, length):
+        timeseries_dframe =stored_dataset.get_data(12697)
+
+        absolute_timeseries_values = timeseries_dframe.axes[0]
+        relative_times = []
+        if str(type(absolute_timeseries_values[0])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>":
+            for time in absolute_timeseries_values:
+                relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6))
+        else:
+            for time in absolute_timeseries_values:
+                relative_times.append(time)
+
+        cache_output = self._create_file_cache(timeseries_dframe)
+        return [cache_output, relative_times]
 
     def _create_file_cache(self, data_frame):
 
         cache_dictionary = {}
         keys = natsorted(data_frame.keys()) # Sort the keys in 'natural' order
         for key in keys:
-            cache_dictionary[key] = data_frame[key].values.tolist()
+            if 'time' not in key:
+                cache_dictionary[key] = data_frame[key].values.tolist()
 
         return cache_dictionary
-
 
     def uploadRender(self, filePath):
         # uploadRender: Takes a given file path and uploads it to blackfynn in a folder called 'Zinc Exports' for the
@@ -101,4 +120,3 @@ class BlackfynnDataModel(object):
     def setSettings(self, settings):
         print('set settings {0}',format(settings))
         self._settings.update(settings)
-

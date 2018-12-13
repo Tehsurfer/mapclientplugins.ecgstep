@@ -7,31 +7,24 @@ Created on Aug 29, 2017
 import types
 
 
-from PySide import QtGui, QtCore
-from functools import partial
-import webbrowser, os
 import json
+import webbrowser
+import numpy as np
+
+from PySide import QtGui, QtCore
 
 from mapclient.view.utils import set_wait_cursor
 from mapclientplugins.ecgstep.view.ecg_ui import Ui_MeshGeneratorWidget
 from mapclientplugins.ecgstep.view.addprofile import AddProfileDialog
+from mapclientplugins.ecgstep.model.video import Video
+from mapclientplugins.ecgstep.model.plot import Plot
 from mapclientplugins.ecgstep.model.blackfynnmesh import BlackfynnMesh
 from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
-
-from opencmiss.zinc.node import Node
-
-from opencmiss.utils.maths import vectorops
-import time
-
-# imports added for pop up graph
-import pyqtgraph as pg
-
-import numpy as np
 
 
 class MeshGeneratorWidget(QtGui.QWidget):
 
-    def __init__(self, model, node_coordinates_data, parent=None):
+    def __init__(self, model, node_coordinates_data, export_directory, parent=None):
         super(MeshGeneratorWidget, self).__init__(parent)
         self._ui = Ui_MeshGeneratorWidget()
         self._model = model
@@ -39,6 +32,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._model.registerFrameIndexUpdateCallback(self._updateFrameIndex)
 
         self._ui.setupUi(self)
+        self._export_directory = export_directory
         self._doneCallback = None
         self._marker_mode_active = False
         self._have_images = False
@@ -46,6 +40,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.time = 0
         self.pw = None
         self._node_coordinates_data = node_coordinates_data
+        self._time_sequence = node_coordinates_data['time_array']
 
         self._blackfynn_data_model = model.getBlackfynnDataModel()
         self._ui.sceneviewer_widget.setContext(model.getContext())
@@ -53,6 +48,9 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.sceneviewer_widget.initializeGL()
         self._makeConnections()
 
+        self.video = Video(self._model.getVideoPath(), 30)
+        self.plot = None
+        self._ui.sceneviewer_widget.grid = []
 
     def _graphicsInitialized(self):
         """
@@ -114,6 +112,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.blackfynnDatasets_comboBox.currentIndexChanged.connect(self._blackfynnDatasetsChanged)
         self._ui.downloadData_button.clicked.connect(self._downloadBlackfynnData)
         self._ui.UploadToBlackfynn_button.clicked.connect(self._exportWebGLJsonToBlackfynn)
+        self._ui.viewVideo_button.clicked.connect(self._playVideo)
+        self._ui.adjustData_Slider.valueChanged.connect(self._adjustData)
 
     def _createFMAItem(self, parent, text, fma_id):
         item = QtGui.QTreeWidgetItem(parent)
@@ -142,7 +142,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _updateTimeValue(self, value):
         self._ui.timeValue_doubleSpinBox.blockSignals(True)
-        max_time_value = NUMBER_OF_FRAMES / self._ui.framesPerSecond_spinBox.value()
+        max_time_value = self.video.videoLength
         self.time = self._model._current_time
 
         if value > max_time_value:
@@ -189,21 +189,25 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def _renderECGMesh(self):
 
         self._pm = BlackfynnMesh(self._model.get_region(), self._node_coordinates_data)
-        self._pm.setScene(self._model.getScene())
+        # self._pm.set_scene(self._model.getScene())
 
         if self.data:
 
             # prepare data
             #self.scaleCacheData()
             self.initialiseSpectrum(self.data)
-            ECGmatrix = []
+            ecg_mmatrix = []
             for key in self.data['cache']:
-                ECGmatrix.append(self.data['cache'][key][0::10])
-            for i in range(len(ECGmatrix)):
-                ECGmatrix[i].append(ECGmatrix[i][-1])
-            ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
-            self._pm.ECGtimes = ECGtimes.tolist()
-            self._pm.ECGcoloursMatrix = ECGmatrix
+                if 'time' not in key:
+                    ecg_mmatrix.append(self.data['cache'][key][0::24])
+            for i in range(len(ecg_mmatrix)):
+                ecg_mmatrix[i].append(ecg_mmatrix[i][-1])
+            # ecg_times = np.linspace(0, 1, len(ecg_mmatrix[:][0]))
+
+
+
+            self._pm.set_data_time_sequence(self._time_sequence)
+            self._pm.set_data(ecg_mmatrix)
 
         self._pm.generate_mesh()
         self._pm.drawMesh()
@@ -280,10 +284,11 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.data = {}
         blackfynnOutput = self._blackfynn_data_model.getTimeseriesData(self._ui.profiles_comboBox.currentText(),
                                                         self._ui.blackfynnDatasets_comboBox.currentText(),
-                                                        self._ui.blackfynnTimeSeries_comboBox.currentText())
+                                                        self._ui.blackfynnTimeSeries_comboBox.currentText(),
+                                                        self.video.videoLength)
         self.data['cache'] = blackfynnOutput[0]
         self.data['times'] = blackfynnOutput[1]
-        self._exportDataJson()
+        self.plot = Plot(self.data)
         self._renderECGMesh()
 
     def _updateBlackfynnUi(self):
@@ -309,10 +314,24 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def _blackfynnDatasetsChanged(self, index):
         print(index)
 
+    def _playVideo(self):
+        if self.data:
+            self.vid = Video(self._model.getVideoPath(), 30)
+            self._adjustData()
+            self.vid.line = self.plot.line
+            self.vid.datalen = self.plot.datalen
+            self.vid.playVideo()
+
+    def _adjustData(self):
+        newOffset = self._ui.adjustData_Slider.value()/100
+        self.plot.adjustData(newOffset)
+        self.vid.line = self.plot.line
+        self.data = self.plot.data
+
     def updatePlot(self, key):
 
         try:
-            self.data['cache'][f'LG{key}']
+            self.data['cache']['LG{0}'.format(key)]
         except KeyError:
             print('ERROR: selected data could not be found')
             self.pw.plot(title='Error in data collection')
@@ -320,11 +339,11 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self.pw.clear()
 
         self.pw.plot(self.data['x'],
-                     self.data['cache'][f'LG{key}'],
+                     self.data['cache']['LG{0}'.format(key)],
                      pen='b',
-                     title=f'EEG values from {key} LG{key}',
+                     title='EEG values from {0} LG{0}'.format(key),
                      )
-        self.pw.setTitle(f'EEG values from {key} (LG{key})')
+        self.pw.setTitle('EEG values from {0} LG{0}'.format(key))
         self.line = self.pw.addLine(x=self.time,
                                     pen='r')  # show current time
 
@@ -334,8 +353,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._refreshBlackfynnOptions()
 
     def _exportDataJson(self):
-        export_data = {}
-        export_data['values'] = {}
+        export_data = {'values': {}}
         for key in self.data['cache']:
             export_data['values'][key] = self.data['cache'][key]
         export_data['times'] = self.data['times']
@@ -343,10 +361,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
             json.dump(export_data, fp)
 
     def _exportWebGLJson(self):
-        '''
-            Export graphics into JSON formats. Returns an array containing the
-       string buffers for each export
-            '''
+        """
+        Export graphics into JSON formats. Returns an array containing the
+        string buffers for each export
+        """
 
         try:
             self.data
@@ -354,10 +372,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
             # Scale down our data (every 10th value) for exporting
             ECGmatrix = []
             for key in self.data['cache']:
-                ECGmatrix.append(self.data['cache'][key][0::10])
+                ECGmatrix.append(self.data['cache'][key][0::100])
             for i in range(len(ECGmatrix)):
                 ECGmatrix[i].append(ECGmatrix[i][-1])
-            ECGtimes = np.linspace(0, 1, len(ECGmatrix[:][0]))
+            ECGtimes = np.linspace(self._time_sequence[0], self._time_sequence[-1], len(ECGmatrix[:][0]))
 
             # Set up our scene resource
             ecg_region = self._model._region.findChildByName('ecg_plane')
@@ -368,6 +386,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             sceneSR.setFinishTime(ECGtimes[-1])
             sceneSR.setNumberOfTimeSteps(len(ECGtimes))
             sceneSR.setOutputTimeDependentColours(1)
+            sceneSR.setOutputTimeDependentVertices(1)
 
             # Get the total number of graphics in a scene/region that can be exported
             number = sceneSR.getNumberOfResourcesRequired()
@@ -381,11 +400,11 @@ class MeshGeneratorWidget(QtGui.QWidget):
             # Store all the resources in a buffer
             buffer = [resources[i].getBuffer()[1] for i in range(number)]
 
-            mpbPath = self._ui.exportDirectory_lineEdit.text()
+            mpbPath = self._export_directory
 
             # Write the files to directories for the MPB to read.
             # Find it at https://github.com/Tehsurfer/MPB
-            heartPath = mpbPath + '\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
+            heartPath = mpbPath
             htmlIndexPath = mpbPath + '\simple_heart\\index.html'
             for i, content in enumerate(buffer):
                 if content is None:
@@ -398,8 +417,12 @@ class MeshGeneratorWidget(QtGui.QWidget):
                     f2 = open(heartPath + 'ecgAnimation.json', 'w')
                     f2.write(content)
                     f2.close()
-                # f = open(f'webGLExport{i+1}.json', 'w') # for debugging
-                # f.write(content)
+                if (i + 1) is 3:
+                    f2 = open(heartPath + 'picking_node_3.json', 'w')
+                    f2.write(content)
+                    f2.close()
+                f = open(heartPath + '\webGLExport'+ str(i+1) + '.json', 'w') # for debugging
+                f.write(content)
             webbrowser.open(htmlIndexPath)
         except:
             pass
@@ -411,9 +434,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             '''
 
         try:
-            self.data
-
-            mpbPath = self._ui.exportDirectory_lineEdit.text()
+            mpbPath = self._export_directory
 
             # Write the files to directories for the MPB to read.
             # Find it at https://github.com/Tehsurfer/MPB
@@ -438,27 +459,19 @@ class MeshGeneratorWidget(QtGui.QWidget):
         if self._ui.sceneviewer_widget.getSceneviewer() is not None:
             self._ui.sceneviewer_widget.viewAll()
 
-    # def keyPressEvent(self, event):
-    #     if event.modifiers() & QtCore.Qt.CTRL and QtGui.QApplication.mouseButtons() == QtCore.Qt.NoButton:
-    #         self._marker_mode_active = True
-    #
-    #         self._ui.sceneviewer_widget._calculatePointOnPlane = types.MethodType(_calculatePointOnPlane, self._ui.sceneviewer_widget)
-    #         self._ui.sceneviewer_widget.mousePressEvent = types.MethodType(mousePressEvent, self._ui.sceneviewer_widget)
-    #         #self._ui.sceneviewer_widget.foundNode = False
-    #         self._model.printLog()
-    #
-    # def keyReleaseEvent(self, event):
-    #     if self._marker_mode_active:
-    #         self._marker_mode_active = False
-    #         self._ui.sceneviewer_widget._calculatePointOnPlane = None
-    #         self._ui.sceneviewer_widget.mousePressEvent = self._original_mousePressEvent
-    #         if self._ui.sceneviewer_widget.foundNode and len(self._ui.sceneviewer_widget.grid) is 2:
-    #             self.updatePlot(self._ui.sceneviewer_widget.nodeKey) # updates plot if a node is clicked
-    #             if self._ui.sceneviewer_widget.nodeKey in self._ecg_graphics.node_corner_list:
-    #                 self._ecg_graphics.updateGrid(self._ui.sceneviewer_widget.nodeKey,  self._ui.sceneviewer_widget.grid[1])
-    #             self._ui.sceneviewer_widget.foundNode = False
+    def keyPressEvent(self, event):
+        if event.modifiers() & QtCore.Qt.CTRL and QtGui.QApplication.mouseButtons() == QtCore.Qt.NoButton:
+            self._marker_mode_active = True
 
+            self._ui.sceneviewer_widget._calculatePointOnPlane = types.MethodType(_calculatePointOnPlane, self._ui.sceneviewer_widget)
+            self._ui.sceneviewer_widget.mousePressEvent = types.MethodType(mousePressEvent, self._ui.sceneviewer_widget)
+            self._model.printLog()
 
+    def keyReleaseEvent(self, event):
+        if self._marker_mode_active:
+            self._marker_mode_active = False
+            self._ui.sceneviewer_widget._calculatePointOnPlane = None
+            self._ui.sceneviewer_widget.mousePressEvent = self._original_mousePressEvent
 
 
 def mousePressEvent(self, event):
@@ -470,7 +483,7 @@ def mousePressEvent(self, event):
         print('Location of click (x,y): (' + str(event.x()) + ', ' + str(event.y()) +')')
         node = self.getNearestNode(event.x(), event.y())
         if node.isValid():
-            print(f'node {node.getIdentifier()} was clicked')
+            print('node {0} was clicked'.format(node.getIdentifier()))
             self.foundNode = True
             self.nodeKey = node.getIdentifier()
             self.node = node
@@ -480,17 +493,7 @@ def mousePressEvent(self, event):
         self._calculatePointOnPlane = None
         self.mousePressEvent = self.original_mousePressEvent
 
-        if len(self.grid) > 2 and self.foundNode:
-            self.grid = []
-            self.foundNode = False
-        self.grid.append(point_on_plane)
-
-        if len(self.grid) > 4:
-            self.grid = []
-
     return [event.x(), event.y()]
-
-
 
 
 def _calculatePointOnPlane(self, x, y):
@@ -498,11 +501,11 @@ def _calculatePointOnPlane(self, x, y):
 
     far_plane_point = self.unproject(x, -y, -1.0)
     near_plane_point = self.unproject(x, -y, 1.0)
-    plane_point, plane_normal = self._model.getPlaneDescription()
+    plane_point, plane_offset, plane_normal = self._model.getPlaneDescription()
     point_on_plane = calculateLinePlaneIntersection(near_plane_point, far_plane_point, plane_point, plane_normal)
-    self.plane_normal = plane_normal
-    print(point_on_plane)
-    print(f'normal: {plane_normal}')
+    # if len(self.grid) < 4:
+    #     self.grid.append(point_on_plane)
+    # else:
+    #     self.grid = []
+    #     self.grid.append(point_on_plane)
     return point_on_plane
-
-

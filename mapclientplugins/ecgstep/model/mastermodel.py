@@ -12,7 +12,7 @@ from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
 
 class MasterModel(object):
 
-    def __init__(self, location, identifier):
+    def __init__(self, location, identifier, video_path):
         self._location = location
         self._identifier = identifier
         self._filenameStem = os.path.join(self._location, self._identifier)
@@ -25,6 +25,7 @@ class MasterModel(object):
         self._initialise()
         self._region = self._context.createRegion()
         self._blackfynn_data_model = BlackfynnDataModel()
+        self._video_path = video_path
 
         self._settings = {
             'frames-per-second': 25,
@@ -83,6 +84,9 @@ class MasterModel(object):
             scaled_time = self._current_time/duration
 
         return scaled_time
+
+    def getVideoPath(self):
+        return self._video_path
 
     def getIdentifier(self):
         return self._identifier

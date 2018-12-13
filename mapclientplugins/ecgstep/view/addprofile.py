@@ -36,6 +36,7 @@ class AddProfileDialog(QtGui.QDialog):
     @set_wait_cursor
     def _can_access_blackfynn(self, api_key, api_secret):
         can_access = False
+        print(isinstance(api_key, unicode), isinstance(api_key, str))
         bf = Blackfynn(api_token=api_key, api_secret=api_secret)
         if bf.context.exists:
             can_access = True
