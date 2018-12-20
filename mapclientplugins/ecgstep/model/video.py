@@ -44,8 +44,11 @@ class Video :
             # image = saveFrameInMemory(imArray)
             # imageList.append(image)
             cv2.imshow('frame', frameTemp)
-            # self.line.setValue(self.frameCount / self.numFrames * self.datalen)
+            self.line.setValue(self.frameCount / self.numFrames * self.datalen)
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                self.stopVideo()
+                return False
+            if cv2.getWindowProperty('frame', 0) < 0:
                 self.stopVideo()
                 return False
             if self.frameCount == 60:

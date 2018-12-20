@@ -13,6 +13,7 @@ class BlackfynnDataModel(object):
         self._settings = {'active-profile': ''}
         self._cache = {}
         self._bf = None
+        self._extra_length = 4
 
     def addProfile(self, profile):
         self._settings[profile['name']] = {'api_token': profile['token'], 'api_secret': profile['secret']}
@@ -71,7 +72,7 @@ class BlackfynnDataModel(object):
                     return  self.proecessTabularData(stored_dataset, length)
 
     def proecessTimeseriesData(self, stored_dataset, length):
-        timeseries_dframe = stored_dataset.get_data(length='{0}s'.format(length))
+        timeseries_dframe = stored_dataset.get_data(length='{0}s'.format(length + self._extra_length))
         cache_output = self._create_file_cache(timeseries_dframe)
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []
@@ -86,10 +87,10 @@ class BlackfynnDataModel(object):
         relative_times = []
         if str(type(absolute_timeseries_values[0])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>":
             for time in absolute_timeseries_values:
-                relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6))
+                relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6) - self._extra_length/2)
         else:
             for time in absolute_timeseries_values:
-                relative_times.append(time)
+                relative_times.append(time - self._extra_length/2)
 
         cache_output = self._create_file_cache(timeseries_dframe)
         return [cache_output, relative_times]
