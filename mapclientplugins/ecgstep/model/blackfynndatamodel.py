@@ -7,7 +7,7 @@ from blackfynn import Blackfynn
 from natsort import natsorted
 
 
-class BlackfynnDataModel(object):
+class BlackfynnDataModel():
 
     def __init__(self):
         self._settings = {'active-profile': ''}
@@ -25,7 +25,7 @@ class BlackfynnDataModel(object):
         return self._settings['active-profile']
 
     def getExistingProfileNames(self):
-        profile_names = self._settings.keys()
+        profile_names = list(self._settings) # note this is for python 3.x
         profile_names.remove('active-profile')
         return profile_names
 
@@ -113,6 +113,16 @@ class BlackfynnDataModel(object):
         except:
             self._bf.create_dataset('Zinc Exports')
             ds = self._bf.get_dataset('Zinc Exports')
+        ds.upload(filePath)
+
+    def uploadAdjustedData(self, filePath):
+        # uploadRender: Takes a given file path and uploads it to blackfynn in a folder called ''NEON adjusted Data'' for the
+        #               user currently logged in.
+        try:
+            ds = self._bf.get_dataset('NEON adjusted Data')
+        except:
+            self._bf.create_dataset('NEON adjusted Data')
+            ds = self._bf.get_dataset('NEON adjusted Data')
         ds.upload(filePath)
 
     def getSettings(self):
