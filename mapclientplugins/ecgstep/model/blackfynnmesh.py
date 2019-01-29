@@ -173,18 +173,27 @@ class BlackfynnMesh(MeshAlignmentModel):
 
         # Set fields for later access
         self._mesh_group = meshGroup
+        self._mesh_group_list = mesh_group_list
+        self._element_node_list = element_node_list
         self._field_element_group = fieldElementGroup
         self._coordinates = coordinates
 
         field_module.endChange()
+        self._strain_graphics_point_attr = []
         for i, mg in enumerate(mesh_group_list):
             strain = self.calculate_strains_on_element(element_node_list[i], 0)
-            self.display_strains(strain, mg)
+            self.create_display_strains(strain, mg)
 
+    def display_strains_at_given_time(self, time_step):
+        for i, mg in enumerate(self._mesh_group_list):
+            strain = self.calculate_strains_on_element(self._element_node_list[i], time_step)
+            self._strain_graphics_point_attr[i].setOrientationScaleField(strain)
 
     def calculate_strains_on_element(self, element, timestep):
         strains = [0,0,0]
         nodes = self._time_based_node_description
+
+        # points is the location of a line at timestep t. points_dash is the location of the line at timestep t+1
         points = [nodes[str(element[0])][timestep], nodes[str(element[1])][timestep]]
         points_dash = [nodes[str(element[0])][timestep+1], nodes[str(element[1])][timestep+1]]
         strain_1 = self.calculate_strain(points, points_dash)
@@ -193,14 +202,23 @@ class BlackfynnMesh(MeshAlignmentModel):
         points_dash = [nodes[str(element[2])][timestep + 1], nodes[str(element[3])][timestep + 1]]
         strain_2 = self.calculate_strain(points, points_dash)
 
+        points = [nodes[str(element[0])][timestep], nodes[str(element[2])][timestep]]
+        points_dash = [nodes[str(element[0])][timestep + 1], nodes[str(element[2])][timestep + 1]]
+        strain_3 = self.calculate_strain(points, points_dash)
 
-        strain_av = ( np.array(strain_1) + np.array(strain_2) ) / 2
+        points = [nodes[str(element[1])][timestep], nodes[str(element[3])][timestep]]
+        points_dash = [nodes[str(element[1])][timestep + 1], nodes[str(element[3])][timestep + 1]]
+        strain_4 = self.calculate_strain(points, points_dash)
+
+
+        strain_av = ( np.array(strain_1) + np.array(strain_2) + np.array(strain_3) + np.array(strain_4) ) / 4
 
         return strain_av.tolist()
 
-    def display_strains(self, strain, mesh_group):
+    def create_display_strains(self, strain, mesh_group):
         scene = self._region.getScene()
         fm = self._region.getFieldmodule()
+        fm.beginChange()
         coordinates = self._coordinates
         coordinates = coordinates.castFiniteElement()
         strain_graphics = scene.createGraphicsPoints()
@@ -208,19 +226,17 @@ class BlackfynnMesh(MeshAlignmentModel):
         strain_graphics.setCoordinateField(coordinates)
         strain_graphics.setSubgroupField(mesh_group)
         pointattr = strain_graphics.getGraphicspointattributes()
-        pointattr.setGlyphShapeType(Glyph.SHAPE_TYPE_AXES_123)
-        meshDimension = 3
-        if meshDimension == 1:
-            pointattr.setBaseSize([0.0, 2 * width, 2 * width])
-            pointattr.setScaleFactors([0.25, 0.0, 0.0])
-        elif meshDimension == 2:
-            pointattr.setBaseSize([0.0, 0.0, 2 * width])
-            pointattr.setScaleFactors([0.25, 0.25, 0.0])
-        else:
-            pointattr.setBaseSize(strain)
+        pointattr.setGlyphShapeType(Glyph.SHAPE_TYPE_ARROW )
+
+        pointattr.setBaseSize([0.1,0.1,0.1])
+        pointattr.setOrientationScaleField(strain)
         materialModule = scene.getMaterialmodule()
         strain_graphics.setMaterial(materialModule.findMaterialByName('yellow'))
-        strain_graphics.setName('displayXiAxes')
+        strain_graphics.setName('displayStrains')
+
+        # Create a point attribute arrray so that we can modify the size later easily
+        self._strain_graphics_point_attr.append(pointattr)
+        fm.endChange()
 
     def convert_dict_to_array(self, dictionary):
         array = []
@@ -241,7 +257,7 @@ class BlackfynnMesh(MeshAlignmentModel):
 
     def calculate_strain(self, points, points_dash):
         strain = [0, 0, 0]
-        for dimension, value in enumerate(points):
+        for dimension, value in enumerate(points[0]):
             length1 = points_dash[1][dimension] - points_dash[0][dimension]
             length0 = points[1][dimension] - points[0][dimension]
             strain[dimension] = (length1 - length0) / length0

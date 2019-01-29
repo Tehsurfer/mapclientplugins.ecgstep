@@ -145,6 +145,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         max_time_value = self.video.videoLength
         self.time = self._model._current_time
 
+
         if value > max_time_value:
             self._ui.timeValue_doubleSpinBox.setValue(max_time_value)
             self._timePlayStopClicked()
@@ -226,6 +227,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _timeValueChanged(self, value):
         self._model.setTimeValue(value)
+        self._pm.display_strains_at_given_time(int(value))
 
     def _timeDurationChanged(self, value):
         self._model.setTimeDuration(value)
