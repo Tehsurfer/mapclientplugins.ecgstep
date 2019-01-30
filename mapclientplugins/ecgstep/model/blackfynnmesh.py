@@ -181,39 +181,35 @@ class BlackfynnMesh(MeshAlignmentModel):
         field_module.endChange()
         self._strain_graphics_point_attr = []
         for i, mg in enumerate(mesh_group_list):
-            strain = self.calculate_strains_on_element(element_node_list[i], 0)
-            self.create_display_strains(strain, mg)
+            strain = self.calculate_strain_in_element_xi(element_node_list[i], 0)
+            scaled_eigvectors = self.get_sized_eigvectors(strain)
+            self.create_display_strains(scaled_eigvectors, mg)
 
     def display_strains_at_given_time(self, time_step):
+        fm = self._region.getFieldmodule()
         for i, mg in enumerate(self._mesh_group_list):
-            strain = self.calculate_strains_on_element(self._element_node_list[i], time_step)
-            self._strain_graphics_point_attr[i].setOrientationScaleField(strain)
+            strain = self.calculate_strain_in_element_xi(self._element_node_list[i], time_step)
+            scaled_eigvectors = self.get_sized_eigvectors(strain)
+            ss = fm.createFieldConstant(np.array(scaled_eigvectors).flatten().tolist())
+            self._strain_graphics_point_attr[i].setOrientationScaleField(ss)
 
     def calculate_strains_on_element(self, element, timestep):
-        strains = [0,0,0]
+
         nodes = self._time_based_node_description
 
         # points is the location of a line at timestep t. points_dash is the location of the line at timestep t+1
-        points = [nodes[str(element[0])][timestep], nodes[str(element[1])][timestep]]
-        points_dash = [nodes[str(element[0])][timestep+1], nodes[str(element[1])][timestep+1]]
-        strain_1 = self.calculate_strain(points, points_dash)
+        points = [nodes[str(element[1])][timestep], nodes[str(element[2])][timestep],nodes[str(element[3])][timestep]]
+        points_dash = [nodes[str(element[1])][timestep+1], nodes[str(element[2])][timestep+1],nodes[str(element[3])][timestep+1]]
+        strain = self.calculate_strain(points, points_dash)
 
-        points = [nodes[str(element[2])][timestep], nodes[str(element[3])][timestep]]
-        points_dash = [nodes[str(element[2])][timestep + 1], nodes[str(element[3])][timestep + 1]]
-        strain_2 = self.calculate_strain(points, points_dash)
+        return strain
+    def get_sized_eigvectors(self, E):
 
-        points = [nodes[str(element[0])][timestep], nodes[str(element[2])][timestep]]
-        points_dash = [nodes[str(element[0])][timestep + 1], nodes[str(element[2])][timestep + 1]]
-        strain_3 = self.calculate_strain(points, points_dash)
-
-        points = [nodes[str(element[1])][timestep], nodes[str(element[3])][timestep]]
-        points_dash = [nodes[str(element[1])][timestep + 1], nodes[str(element[3])][timestep + 1]]
-        strain_4 = self.calculate_strain(points, points_dash)
-
-
-        strain_av = ( np.array(strain_1) + np.array(strain_2) + np.array(strain_3) + np.array(strain_4) ) / 4
-
-        return strain_av.tolist()
+        e_vals, e_vecs = np.linalg.eig(E)
+        sizedvectors = []
+        for i, _ in enumerate(e_vals):
+            sizedvectors.append(list(e_vals[i] * e_vecs[:, i]))
+        return np.vstack(sizedvectors).tolist()
 
     def create_display_strains(self, strain, mesh_group):
         scene = self._region.getScene()
@@ -226,12 +222,13 @@ class BlackfynnMesh(MeshAlignmentModel):
         strain_graphics.setCoordinateField(coordinates)
         strain_graphics.setSubgroupField(mesh_group)
         pointattr = strain_graphics.getGraphicspointattributes()
-        pointattr.setGlyphShapeType(Glyph.SHAPE_TYPE_ARROW )
+        pointattr.setGlyphShapeType(Glyph.SHAPE_TYPE_DIAMOND )
 
-        pointattr.setBaseSize([0.1,0.1,0.1])
-        pointattr.setOrientationScaleField(strain)
+        pointattr.setBaseSize([0.01,0.01,0.01])
+        ss = fm.createFieldConstant(np.array(strain).flatten().tolist())
+        pointattr.setOrientationScaleField(ss)
         materialModule = scene.getMaterialmodule()
-        strain_graphics.setMaterial(materialModule.findMaterialByName('yellow'))
+        strain_graphics.setMaterial(materialModule.findMaterialByName('red'))
         strain_graphics.setName('displayStrains')
 
         # Create a point attribute arrray so that we can modify the size later easily
@@ -256,28 +253,37 @@ class BlackfynnMesh(MeshAlignmentModel):
         return strains
 
     def calculate_strain(self, points, points_dash):
-        strain = [0, 0, 0]
-        for dimension, value in enumerate(points[0]):
-            length1 = points_dash[1][dimension] - points_dash[0][dimension]
-            length0 = points[1][dimension] - points[0][dimension]
-            strain[dimension] = (length1 - length0) / length0
-        return strain
+        F = np.linalg.solve(points, points_dash)
+        C = F.T @ F
+        E = .5 * (C - np.identity(3))
+        return E
 
-    def calculate_strain_in_line_direction(self, points, points_dash):
-        '''
-        :param points: p1 and p2
-        :param points_dash: p1' and p2'
-        :return:
+    def calculate_strain_in_element_xi(self, element, timestep):
 
-        note that we calculate in the direction of the line between two points by creating a weighting of line gradient
-        then multiply our strains by this normalised line
-        '''
+        nodes = self._time_based_node_description
 
-        strain = self.calculate_strain(points, points_dash)
-        total_delta = sum(np.array(points[1]) - np.array(points[0]))
-        line_direction = np.array(points[1] - np.array(points[0])) / total_delta
-        adjusted_strains = np.array(strain) * line_direction
-        return [adjusted_strains, line_direction]
+        # xl and yl are our un adjusted element directions. We will use these create a local 3D coordinates for the element
+
+        # xl = point 2 of our element - point 1
+        xl = np.array( nodes[str(element[1])][timestep] ) - np.array( nodes[str(element[0])][timestep] )
+        yl = np.array( nodes[str(element[0])][timestep] ) - np.array( nodes[str(element[2])][timestep] )
+
+        xi = xl / np.linalg.norm(xl)
+        norm = np.cross(yl, xl)
+        zi = norm / np.linalg.norm(norm)
+        yi = np.cross(zi, xi)
+        yi = yi / np.linalg.norm(yi)
+        # Transormation Matrix TM will be used to convert between coordinate systems
+        TM = np.vstack([xi, yi, zi]).T
+
+        E = self.calculate_strains_on_element(element, timestep)
+
+        Exi = TM @ E
+
+        return Exi
+
+
+
 
     def drawMesh(self):
 
