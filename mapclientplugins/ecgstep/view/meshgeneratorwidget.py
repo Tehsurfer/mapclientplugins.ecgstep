@@ -39,6 +39,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
         self.time = 0
         self.pw = None
+        self.data = None
         self._node_coordinates_data = node_coordinates_data
         self._time_sequence = node_coordinates_data['time_array']
 
@@ -107,6 +108,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.timeLoop_checkBox.clicked.connect(self._timeLoopClicked)
         self._ui.pushButton.clicked.connect(self._exportWebGLJson)
         self._ui.addProfile_pushButton.clicked.connect(self._addProfileClicked)
+        self._ui.strain_reference_button.clicked.connect(self._set_strain_reference)
         self._ui.blackfynnDatasets_pushButton.clicked.connect(self._downloadDatasetsClicked)
         self._ui.blackfynnTimeSeries_pushButton.clicked.connect(self._downloadTimeSeriesClicked)
         self._ui.blackfynnDatasets_comboBox.currentIndexChanged.connect(self._blackfynnDatasetsChanged)
@@ -227,7 +229,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _timeValueChanged(self, value):
         self._model.setTimeValue(value)
-        self._pm.display_strains_at_given_time(int(value))
+        # self._pm.display_strains_at_given_time(int(value))
+        self._pm.display_strains_at_given_time_to_reference(int(value))
 
     def _timeDurationChanged(self, value):
         self._model.setTimeDuration(value)
@@ -316,13 +319,17 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def _blackfynnDatasetsChanged(self, index):
         print(index)
 
+    def _set_strain_reference(self):
+         if self._pm is not None and self.vid is not None:
+            self._pm.set_strain_reference_frame(self.vid.frameCount)
+
     def _playVideo(self):
-        if self.data:
-            self.vid = Video(self._model.getVideoPath(), 30)
+        self.vid = Video(self._model.getVideoPath(), 30)
+        if self.data is not None:
             self._adjustData()
             self.vid.line = self.plot.line
             self.vid.datalen = self.plot.datalen
-            self.vid.playVideo()
+        self.vid.playVideo()
 
     def _adjustData(self):
         newOffset = self._ui.adjustData_Slider.value()/100

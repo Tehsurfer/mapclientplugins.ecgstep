@@ -5,7 +5,7 @@ This file is modified from 'meshtype_2d_plate1.py' created by Richard Christie.
 
 """
 import numpy as np
-
+import math
 from opencmiss.zinc.element import Element, Elementbasis
 from opencmiss.zinc.field import Field
 from opencmiss.zinc.node import Node
@@ -183,12 +183,22 @@ class BlackfynnMesh(MeshAlignmentModel):
         for i, mg in enumerate(mesh_group_list):
             strain = self.calculate_strain_in_element_xi(element_node_list[i], 0)
             scaled_eigvectors = self.get_sized_eigvectors(strain)
+            if np.iscomplex(scaled_eigvectors).any():
+                x = 0
             self.create_display_strains(scaled_eigvectors, mg)
 
     def display_strains_at_given_time(self, time_step):
         fm = self._region.getFieldmodule()
         for i, mg in enumerate(self._mesh_group_list):
-            strain = self.calculate_strain_in_element_xi(self._element_node_list[i], time_step)
+            strain = self.calculate_strains_on_element(self._element_node_list[i], time_step)
+            scaled_eigvectors = self.get_sized_eigvectors(strain)
+            ss = fm.createFieldConstant(np.array(scaled_eigvectors).flatten().tolist())
+            self._strain_graphics_point_attr[i].setOrientationScaleField(ss)
+
+    def display_strains_at_given_time_to_reference(self, time_step):
+        fm = self._region.getFieldmodule()
+        for i, mg in enumerate(self._mesh_group_list):
+            strain = self.calculate_strains_from_element_reference(self._element_node_list[i], time_step)
             scaled_eigvectors = self.get_sized_eigvectors(strain)
             ss = fm.createFieldConstant(np.array(scaled_eigvectors).flatten().tolist())
             self._strain_graphics_point_attr[i].setOrientationScaleField(ss)
@@ -200,6 +210,16 @@ class BlackfynnMesh(MeshAlignmentModel):
         # points is the location of a line at timestep t. points_dash is the location of the line at timestep t+1
         points = [nodes[str(element[1])][timestep], nodes[str(element[2])][timestep],nodes[str(element[3])][timestep]]
         points_dash = [nodes[str(element[1])][timestep+1], nodes[str(element[2])][timestep+1],nodes[str(element[3])][timestep+1]]
+        strain = self.calculate_strain(points, points_dash)
+
+        return strain
+    def calculate_strains_from_element_reference(self, element, timestep):
+
+        nodes = self._time_based_node_description
+
+        # points is the location of a line at timestep t. points_dash is the location of the line at timestep t+1
+        points = [nodes[str(element[1])][self._frame_index], nodes[str(element[2])][self._frame_index],nodes[str(element[3])][self._frame_index]]
+        points_dash = [nodes[str(element[1])][timestep], nodes[str(element[2])][timestep],nodes[str(element[3])][timestep]]
         strain = self.calculate_strain(points, points_dash)
 
         return strain
@@ -273,14 +293,22 @@ class BlackfynnMesh(MeshAlignmentModel):
         zi = norm / np.linalg.norm(norm)
         yi = np.cross(zi, xi)
         yi = yi / np.linalg.norm(yi)
+        TT = np.vstack([xi, yi, zi]).T
         # Transormation Matrix TM will be used to convert between coordinate systems
-        TM = np.vstack([xi, yi, zi]).T
+        TM = np.eye(3)
+        for i in range (0,2):
+            for j in range(0,2):
+                TM[i][j] = math.cos(angle_between_vectors(np.eye(3)[:,j],TT[i,:]))
 
         E = self.calculate_strains_on_element(element, timestep)
 
         Exi = TM @ E
-
         return Exi
+
+
+    def set_strain_reference_frame(self, frame_index):
+        self._frame_index = frame_index
+
 
 
 
@@ -349,3 +377,27 @@ class BlackfynnMesh(MeshAlignmentModel):
 
         self._spectrum_component.setRangeMaximum(max)
         self._spectrum_component.setRangeMinimum(min)
+
+
+def vector_norm(data, axis=None, out=None):
+    data = np.array(data, dtype=np.float64, copy=True)
+    if out is None:
+        if data.ndim == 1:
+            return math.sqrt(np.dot(data, data))
+        data *= data
+        out = np.atleast_1d(np.sum(data, axis=axis))
+        np.sqrt(out, out)
+        return out
+    else:
+        data *= data
+        np.sum(data, axis=axis, out=out)
+        np.sqrt(out, out)
+
+def angle_between_vectors(v0, v1, directed=True, axis=0):
+
+    v0 = np.array(v0, dtype=np.float64, copy=False)
+    v1 = np.array(v1, dtype=np.float64, copy=False)
+    dot = np.sum(v0 * v1, axis=axis)
+    dot /= np.linalg.norm(v0, axis=axis) * vector_norm(v1, axis=axis)
+    dot = np.clip(dot, -1.0, 1.0)
+    return np.arccos(dot if directed else numpy.fabs(dot))

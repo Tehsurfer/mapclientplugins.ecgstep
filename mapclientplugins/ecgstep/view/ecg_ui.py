@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ecgwidget.ui'
 #
-# Created: Thu Nov 29 16:14:06 2018
+# Created: Fri Feb  1 12:49:54 2019
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -50,7 +50,7 @@ class Ui_MeshGeneratorWidget(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 472, 409))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 472, 423))
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -98,9 +98,15 @@ class Ui_MeshGeneratorWidget(object):
         self.label_4 = QtGui.QLabel(self.groupBox_2)
         self.label_4.setGeometry(QtCore.QRect(30, 70, 55, 16))
         self.label_4.setObjectName("label_4")
+        self.pushButton_3 = QtGui.QPushButton(self.groupBox_2)
+        self.pushButton_3.setGeometry(QtCore.QRect(60, 170, 201, 24))
+        self.pushButton_3.setObjectName("pushButton_3")
         self.viewVideo_button = QtGui.QPushButton(self.groupBox_2)
-        self.viewVideo_button.setGeometry(QtCore.QRect(180, 90, 121, 24))
+        self.viewVideo_button.setGeometry(QtCore.QRect(60, 90, 111, 21))
         self.viewVideo_button.setObjectName("viewVideo_button")
+        self.strain_reference_button = QtGui.QPushButton(self.groupBox_2)
+        self.strain_reference_button.setGeometry(QtCore.QRect(210, 90, 241, 21))
+        self.strain_reference_button.setObjectName("strain_reference_button")
         self.verticalLayout_3.addWidget(self.groupBox_2)
         self.video_groupBox = QtGui.QGroupBox(self.scrollAreaWidgetContents_2)
         self.video_groupBox.setObjectName("video_groupBox")
@@ -254,7 +260,9 @@ class Ui_MeshGeneratorWidget(object):
         self.groupBox_2.setTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Adjust Data", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "+2s", None, QtGui.QApplication.UnicodeUTF8))
         self.label_4.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "-2s", None, QtGui.QApplication.UnicodeUTF8))
-        self.viewVideo_button.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "View data with Video", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_3.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "View data with video", None, QtGui.QApplication.UnicodeUTF8))
+        self.viewVideo_button.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "View Video", None, QtGui.QApplication.UnicodeUTF8))
+        self.strain_reference_button.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Set curent Frame as strain reference point", None, QtGui.QApplication.UnicodeUTF8))
         self.video_groupBox.setTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Video:", None, QtGui.QApplication.UnicodeUTF8))
         self.frameIndex_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Frame index:", None, QtGui.QApplication.UnicodeUTF8))
         self.framesPerSecond_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Frames per second:", None, QtGui.QApplication.UnicodeUTF8))
@@ -267,7 +275,7 @@ class Ui_MeshGeneratorWidget(object):
         self.blackfynnTimeSeries_pushButton.setToolTip(QtGui.QApplication.translate("MeshGeneratorWidget", "Retrieve time series", None, QtGui.QApplication.UnicodeUTF8))
         self.blackfynnDatasets_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Datasets:", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Export for WebGL", None, QtGui.QApplication.UnicodeUTF8))
-        self.exportDirectory_lineEdit.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "", None, QtGui.QApplication.UnicodeUTF8))
+        self.exportDirectory_lineEdit.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "C:\\Users\\jkho021\\Projects\\MPB", None, QtGui.QApplication.UnicodeUTF8))
         self.blackfynnTimeSeries_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Time series:", None, QtGui.QApplication.UnicodeUTF8))
         self.blackfynnDatasets_pushButton.setToolTip(QtGui.QApplication.translate("MeshGeneratorWidget", "Retrieve datasets", None, QtGui.QApplication.UnicodeUTF8))
         self.UploadToBlackfynn_button.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Upload to Blackfynn", None, QtGui.QApplication.UnicodeUTF8))

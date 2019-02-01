@@ -77,7 +77,7 @@
             <x>0</x>
             <y>0</y>
             <width>472</width>
-            <height>409</height>
+            <height>423</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -219,14 +219,27 @@
                <widget class="QPushButton" name="viewVideo_button">
                 <property name="geometry">
                  <rect>
-                  <x>180</x>
+                  <x>60</x>
                   <y>90</y>
-                  <width>121</width>
-                  <height>24</height>
+                  <width>111</width>
+                  <height>21</height>
                  </rect>
                 </property>
                 <property name="text">
                  <string>View Video</string>
+                </property>
+               </widget>
+               <widget class="QPushButton" name="strain_reference_button">
+                <property name="geometry">
+                 <rect>
+                  <x>210</x>
+                  <y>90</y>
+                  <width>241</width>
+                  <height>21</height>
+                 </rect>
+                </property>
+                <property name="text">
+                 <string>Set curent Frame as strain reference point</string>
                 </property>
                </widget>
               </widget>
@@ -441,7 +454,7 @@
            </widget>
           </item>
           <item row="7" column="2">
-           <widget class="QPushButton" name="pushButton_2">
+           <widget class="QPushButton" name="UploadToBlackfynn_button">
             <property name="text">
              <string>Upload to Blackfynn</string>
             </property>

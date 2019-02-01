@@ -21,9 +21,9 @@ class Video :
 
     def playVideo(self):
         while(self.getNextFrame()):
-
-            self.updatePlot()
-            time.sleep(1 / self.frameRate)
+            if self.line:
+                self.updatePlot()
+            time.sleep(3 / self.frameRate)
         # inter = setInterval(1/self.frameRate,self.getNextFrame)
         # t = threading.Timer(18, inter.cancel())
         # t.start()
@@ -44,7 +44,8 @@ class Video :
             # image = saveFrameInMemory(imArray)
             # imageList.append(image)
             cv2.imshow('frame', frameTemp)
-            self.line.setValue(self.frameCount / self.numFrames * self.datalen)
+            if self.line is not None:
+                self.line.setValue(self.frameCount / self.numFrames * self.datalen)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 self.stopVideo()
                 return False
@@ -100,7 +101,7 @@ class Video :
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             else:
-                break
+                count = -1
             count+=1
         cap.release()
         cv2.destroyAllWindows()
