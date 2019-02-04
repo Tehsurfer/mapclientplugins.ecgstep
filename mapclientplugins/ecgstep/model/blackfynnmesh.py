@@ -296,9 +296,9 @@ class BlackfynnMesh(MeshAlignmentModel):
         TT = np.vstack([xi, yi, zi]).T
         # Transormation Matrix TM will be used to convert between coordinate systems
         TM = np.eye(3)
-        for i in range (0,2):
-            for j in range(0,2):
-                TM[i][j] = math.cos(angle_between_vectors(np.eye(3)[:,j],TT[i,:]))
+        for i in range (0,3):
+            for j in range(0,3):
+                TM[i][j] = math.cos(angle_between_vectors(np.eye(3)[:,i],TT[:,j]))
 
         E = self.calculate_strains_on_element(element, timestep)
 
