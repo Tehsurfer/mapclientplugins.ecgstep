@@ -25,7 +25,7 @@ class BlackfynnDataModel(object):
         return self._settings['active-profile']
 
     def getExistingProfileNames(self):
-        profile_names = self._settings.keys()
+        profile_names = list(self._settings)
         profile_names.remove('active-profile')
         return profile_names
 
@@ -81,7 +81,11 @@ class BlackfynnDataModel(object):
         return [cache_output, relative_times]
 
     def proecessTabularData(self, stored_dataset, length):
-        timeseries_dframe =stored_dataset.get_data(12697)
+        # length here is the video length passed from the video length
+
+        # TODO: categorise tabular data to find timescales
+        # Note that the below assumes data is spaced in milliseconds!
+        timeseries_dframe =stored_dataset.get_data(int(length*1000))
 
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []

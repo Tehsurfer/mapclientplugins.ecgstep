@@ -7,8 +7,7 @@ from opencmiss.zinc.context import Context
 from opencmiss.zinc.material import Material
 
 from mapclientplugins.ecgstep.model.blackfynndatamodel import BlackfynnDataModel
-from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
-
+from mapclientplugins.ecgstep.model.video import Video
 
 class MasterModel(object):
 
@@ -26,9 +25,9 @@ class MasterModel(object):
         self._region = self._context.createRegion()
         self._blackfynn_data_model = BlackfynnDataModel()
         self._video_path = video_path
-
+        self.video = Video(video_path, 30)
         self._settings = {
-            'frames-per-second': 25,
+            'frames-per-second': 30,
             'time-loop': False
         }
         self._makeConnections()
@@ -71,7 +70,7 @@ class MasterModel(object):
 
     def _timeout(self):
         self._current_time += 1000/self._settings['frames-per-second']/1000
-        duration = NUMBER_OF_FRAMES / self._settings['frames-per-second']
+        duration = self.video.numFrames / self._settings['frames-per-second']
         if self._settings['time-loop'] and self._current_time > duration:
             self._current_time -= duration
         self._timekeeper.setTime(self._scaleCurrentTimeToTimekeeperTime())
@@ -79,7 +78,7 @@ class MasterModel(object):
 
     def _scaleCurrentTimeToTimekeeperTime(self):
         scaled_time = 0.0
-        duration = NUMBER_OF_FRAMES / self._settings['frames-per-second']
+        duration = self.video.numFrames / self._settings['frames-per-second']
         if duration > 0:
             scaled_time = self._current_time/duration
 
@@ -146,7 +145,6 @@ class MasterModel(object):
     def _getSettings(self):
         settings = self._settings
         settings['blackfynn_settings'] = self._blackfynn_data_model.getSettings()
-        #settings['ECG_grid'] = self._ecgGraphics.getSettings()
         return settings
 
     def loadSettings(self):

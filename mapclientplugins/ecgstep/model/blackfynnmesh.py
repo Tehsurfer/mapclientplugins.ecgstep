@@ -116,7 +116,7 @@ class BlackfynnMesh(MeshAlignmentModel):
         zinc_data_time_sequence = field_module.getMatchingTimesequence(self._data_time_sequence)
         node_template.setTimesequence(colour, zinc_data_time_sequence)
 
-        first_node_number = 1
+        first_node_number = 0
 
         # create nodes
         cache = field_module.createFieldcache()
@@ -220,37 +220,7 @@ class BlackfynnMesh(MeshAlignmentModel):
         nodePoints.setSpectrum(spec)
         nodePoints.setDataField(colour)
 
-        # # Add a colour bar for the spectrum
-        # nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
-        # cache = fm.createFieldcache()
-        # check = nodes.findNodeByIdentifier(1000)
-        # if not check.isValid():
-        #     screen_coords = fm.createFieldFiniteElement(2)
-        #     spectrum_template = nodes.createNodetemplate()
-        #     spectrum_template.defineField(screen_coords)
-        #     spectrum_node = nodes.createNode(1000, spectrum_template)
-        #     cache.setNode(spectrum_node)
-        #     screen_coords.setNodeParameters(cache, -1, Node.VALUE_LABEL_VALUE, 1, [-.95, -.78])
-        #     fng = fm.createFieldNodeGroup(nodes)
-        #     spectrum_group = fng.getNodesetGroup()
-        #     spectrum_group.addNode(spectrum_node)
-        #
-        #     spectrum_graphics = scene.createGraphicsPoints()
-        #     spectrum_graphics.setScenecoordinatesystem(
-        #         Scenecoordinatesystem.SCENECOORDINATESYSTEM_NORMALISED_WINDOW_FIT_BOTTOM)
-        #     spectrum_graphics.setFieldDomainType(Field.DOMAIN_TYPE_NODES)
-        #     spectrum_graphics.setCoordinateField(screen_coords)
-        #     spectrum_graphics.setSubgroupField(fng)
-        #     spectrum_graphics.setSpectrum(spec)
-        #     spectrum_point_attr = spectrum_graphics.getGraphicspointattributes()
-        #
-        #     gm = scene.getGlyphmodule()
-        #     colour_bar = gm.createGlyphColourBar(spec)
-        #     colour_bar.setLabelDivisions(6)
-        #
-        #     spectrum_point_attr.setGlyph(colour_bar)
-        #     spectrum_point_attr.setBaseSize([.3, .4, ])
-
+        # # Uncomment to be able to adjust tessellation
         # tessellationmodule = self._context.getTessellationmodule()
         # fineTessellation = tessellationmodule.createTessellation()
         # fineTessellation.setName('fine')  # name it so it can be found by name later
@@ -259,6 +229,43 @@ class BlackfynnMesh(MeshAlignmentModel):
         # isosurfaces.setTessellation(fineTessellation)
 
         scene.endChange()
+
+    def createSpectrumColourBar(self, spectrum):
+        # Add a colour bar for the spectrum
+
+        fm = self._region.getFieldmodule()
+        scene = self._region.getScene()
+        nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+        cache = fm.createFieldcache()
+        check = nodes.findNodeByIdentifier(1000)
+        if not check.isValid():
+            screen_coords = fm.createFieldFiniteElement(2)
+            spectrum_template = nodes.createNodetemplate()
+            spectrum_template.defineField(screen_coords)
+            spectrum_node = nodes.createNode(1000, spectrum_template)
+            cache.setNode(spectrum_node)
+            screen_coords.setNodeParameters(cache, -1, Node.VALUE_LABEL_VALUE, 1, [-.95, -.78])
+            fng = fm.createFieldNodeGroup(nodes)
+            spectrum_group = fng.getNodesetGroup()
+            spectrum_group.addNode(spectrum_node)
+
+            spectrum_graphics = scene.createGraphicsPoints()
+            spectrum_graphics.setScenecoordinatesystem(
+                Scenecoordinatesystem.SCENECOORDINATESYSTEM_NORMALISED_WINDOW_FIT_BOTTOM)
+            spectrum_graphics.setFieldDomainType(Field.DOMAIN_TYPE_NODES)
+            spectrum_graphics.setCoordinateField(screen_coords)
+            spectrum_graphics.setSubgroupField(fng)
+            spectrum_graphics.setSpectrum(spectrum)
+            spectrum_point_attr = spectrum_graphics.getGraphicspointattributes()
+
+            gm = scene.getGlyphmodule()
+            colour_bar = gm.createGlyphColourBar(spectrum)
+            colour_bar.setLabelDivisions(6)
+
+            spectrum_point_attr.setGlyph(colour_bar)
+            spectrum_point_attr.setBaseSize([.3, .4, ])
+
+
 
     def initialiseSpectrumFromDictionary(self, data):
         min = data[next(iter(data))][0]

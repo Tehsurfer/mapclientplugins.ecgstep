@@ -16,11 +16,8 @@ from PySide import QtGui, QtCore
 from mapclient.view.utils import set_wait_cursor
 from mapclientplugins.ecgstep.view.ecg_ui import Ui_MeshGeneratorWidget
 from mapclientplugins.ecgstep.view.addprofile import AddProfileDialog
-from mapclientplugins.ecgstep.model.video import Video
 from mapclientplugins.ecgstep.model.plot import Plot
 from mapclientplugins.ecgstep.model.blackfynnmesh import BlackfynnMesh
-from mapclientplugins.ecgstep.model.constants import NUMBER_OF_FRAMES
-
 
 class MeshGeneratorWidget(QtGui.QWidget):
 
@@ -38,7 +35,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._have_images = False
 
         self.time = 0
-        self.pw = None
+        self._electrode_mesh = None
         self._node_coordinates_data = node_coordinates_data
         self._time_sequence = node_coordinates_data['time_array']
 
@@ -48,7 +45,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.sceneviewer_widget.initializeGL()
         self._makeConnections()
 
-        self.video = Video(self._model.getVideoPath(), 30)
         self.plot = None
         self._ui.sceneviewer_widget.grid = []
 
@@ -142,7 +138,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _updateTimeValue(self, value):
         self._ui.timeValue_doubleSpinBox.blockSignals(True)
-        max_time_value = self.video.videoLength
+        max_time_value = self._model.video.videoLength
         self.time = self._model._current_time
 
         if value > max_time_value:
@@ -150,24 +146,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self._timePlayStopClicked()
         else:
             self._ui.timeValue_doubleSpinBox.setValue(value)
-            if self.pw is not None:
-                self.line.setValue(round(value, 3)) # adjust time marker
+            if self.plot.line is not None:
+                self.plot.line.setValue(round(value, 3)) # adjust time marker
 
         self._ui.timeValue_doubleSpinBox.blockSignals(False)
-
-    def scaleCacheData(self):
-        tempDict = {}
-        for i, key in enumerate(self.data['cache']):
-            tempDict[str(i)] = self.scaleData(key)
-        self.data['scaled'] = tempDict
-
-    def scaleData(self, key):
-        numFrames = NUMBER_OF_FRAMES
-        y = np.array(self.data['cache'][key])
-        x = np.linspace(0, 16, len(y))
-        xterp = np.linspace(0, 16, numFrames)
-        yterp = np.interp(xterp, x, y)
-        return yterp
 
     def initialiseSpectrum(self, data):
         # initialiseSpectrum modifies the scale of the spectrum to match a set of data
@@ -188,36 +170,29 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _renderECGMesh(self):
 
-        self._pm = BlackfynnMesh(self._model.get_region(), self._node_coordinates_data)
-        # self._pm.set_scene(self._model.getScene())
+        self._electrode_mesh = BlackfynnMesh(self._model.get_region(), self._node_coordinates_data)
 
         if self.data:
 
             # prepare data
-            #self.scaleCacheData()
             self.initialiseSpectrum(self.data)
             ecg_mmatrix = []
             for key in self.data['cache']:
                 if 'time' not in key:
+                    # note that we downsample the data to get it to fit on web portal
                     ecg_mmatrix.append(self.data['cache'][key][0::24])
             for i in range(len(ecg_mmatrix)):
                 ecg_mmatrix[i].append(ecg_mmatrix[i][-1])
-            # ecg_times = np.linspace(0, 1, len(ecg_mmatrix[:][0]))
 
 
+            # pass the created data dictionaries to the mesh model
+            self._electrode_mesh.set_data_time_sequence(self._time_sequence)
+            self._electrode_mesh.set_data(ecg_mmatrix)
 
-            self._pm.set_data_time_sequence(self._time_sequence)
-            self._pm.set_data(ecg_mmatrix)
-
-        self._pm.generate_mesh()
-        self._pm.drawMesh()
-        self._pm.initialiseSpectrumFromDictionary(self.data['cache'])
-        self._ui.sceneviewer_widget.setModel(self._pm)
-
-    def currentFrame(self, value):
-        frame_vals = np.linspace(0, 16, NUMBER_OF_FRAMES)
-        currentFrame = (np.abs(frame_vals - value)).argmin()
-        return currentFrame
+        self._electrode_mesh.generate_mesh()
+        self._electrode_mesh.drawMesh()
+        self._electrode_mesh.initialiseSpectrumFromDictionary(self.data['cache'])
+        self._ui.sceneviewer_widget.setModel(self._electrode_mesh)
 
     def _updateFrameIndex(self, value):
         self._ui.frameIndex_spinBox.blockSignals(True)
@@ -249,7 +224,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _framesPerSecondValueChanged(self, value):
         self._model.setFramesPerSecond(value)
-        self._ui.timeValue_doubleSpinBox.setMaximum(NUMBER_OF_FRAMES/value)
+        self._ui.timeValue_doubleSpinBox.setMaximum(self._model.video.numFrames/value)
 
     def _addProfileClicked(self):
         dlg = AddProfileDialog(self, self._blackfynn_data_model.getExistingProfileNames())
@@ -285,7 +260,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         blackfynnOutput = self._blackfynn_data_model.getTimeseriesData(self._ui.profiles_comboBox.currentText(),
                                                         self._ui.blackfynnDatasets_comboBox.currentText(),
                                                         self._ui.blackfynnTimeSeries_comboBox.currentText(),
-                                                        self.video.videoLength)
+                                                        self._model.video.videoLength)
         self.data['cache'] = blackfynnOutput[0]
         self.data['times'] = blackfynnOutput[1]
         self.plot = Plot(self.data)
@@ -316,36 +291,16 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _playVideo(self):
         if self.data:
-            self.vid = Video(self._model.getVideoPath(), 30)
             self._adjustData()
-            self.vid.line = self.plot.line
-            self.vid.datalen = self.plot.datalen
-            self.vid.playVideo()
+            self._model.video.line = self.plot.line
+            self._model.video.datalen = self.plot.datalen
+            self._model.video.playVideo()
 
     def _adjustData(self):
         newOffset = self._ui.adjustData_Slider.value()/100
         self.plot.adjustData(newOffset)
-        self.vid.line = self.plot.line
+        self._model.video.line = self.plot.line
         self.data = self.plot.data
-
-    def updatePlot(self, key):
-
-        try:
-            self.data['cache']['LG{0}'.format(key)]
-        except KeyError:
-            print('ERROR: selected data could not be found')
-            self.pw.plot(title='Error in data collection')
-            return
-        self.pw.clear()
-
-        self.pw.plot(self.data['x'],
-                     self.data['cache']['LG{0}'.format(key)],
-                     pen='b',
-                     title='EEG values from {0} LG{0}'.format(key),
-                     )
-        self.pw.setTitle('EEG values from {0} LG{0}'.format(key))
-        self.line = self.pw.addLine(x=self.time,
-                                    pen='r')  # show current time
 
     def _refreshOptions(self):
         self._ui.framesPerSecond_spinBox.setValue(self._model.getFramesPerSecond())
