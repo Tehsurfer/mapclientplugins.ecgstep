@@ -107,9 +107,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.blackfynnTimeSeries_pushButton.clicked.connect(self._downloadTimeSeriesClicked)
         self._ui.blackfynnDatasets_comboBox.currentIndexChanged.connect(self._blackfynnDatasetsChanged)
         self._ui.downloadData_button.clicked.connect(self._downloadBlackfynnData)
-        self._ui.UploadToBlackfynn_button.clicked.connect(self._exportWebGLJsonToBlackfynn)
+        # self._ui.UploadToBlackfynn_button.clicked.connect(self._exportWebGLJsonToBlackfynn)
         self._ui.viewVideo_button.clicked.connect(self._playVideo)
         self._ui.adjustData_Slider.valueChanged.connect(self._adjustData)
+        self._ui.tessellation_spinBox.valueChanged.connect(self._setTesselation)
 
     def _createFMAItem(self, parent, text, fma_id):
         item = QtGui.QTreeWidgetItem(parent)
@@ -193,6 +194,9 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._electrode_mesh.drawMesh()
         self._electrode_mesh.initialiseSpectrumFromDictionary(self.data['cache'])
         self._ui.sceneviewer_widget.setModel(self._electrode_mesh)
+
+    def _setTesselation(self):
+        self._model.setTessellation(self._ui.tessellation_spinBox.value())
 
     def _updateFrameIndex(self, value):
         self._ui.frameIndex_spinBox.blockSignals(True)

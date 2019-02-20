@@ -42,6 +42,7 @@ class MasterModel(object):
         self._filenameStem = os.path.join(self._location, self._identifier)
         tess = self._context.getTessellationmodule().getDefaultTessellation()
         tess.setRefinementFactors(12)
+        self._tess = tess
         # set up standard materials and glyphs so we can use them elsewhere
         self._materialmodule = self._context.getMaterialmodule()
         self._materialmodule.defineStandardMaterials()
@@ -104,6 +105,9 @@ class MasterModel(object):
 
     def getContext(self):
         return self._context
+
+    def setTessellation(self,refinement_value):
+        self._tess.setRefinementFactors(refinement_value)
 
     def setFrameIndex(self, frame_index):
         frame_value = frame_index - 1
