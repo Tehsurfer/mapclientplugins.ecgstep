@@ -13,6 +13,10 @@ Installation
   
 5. *Adding plugin to Mapclient*: if the plugin does not show up in Mapclient, add the directory 'mapclientplugins.ecgstep' to the plugin directories list 
 
+Purpose
+------
+This step is desinged to register data from the cloud data storage platform, Blackfynn, to a 3D mesh. This mesh with data embedded in it can then be exported to a format that renders in browser at https://github.com/Tehsurfer/Data-Registration-Portal to share the visualistaion and data exploration with other researchers
+
 
 Usage
 ------
@@ -20,6 +24,11 @@ The Step requires an input in the from of a list of 3D coordinates for the step 
 
 ![image](https://user-images.githubusercontent.com/37255664/45839099-43191b00-bcc8-11e8-89f5-021043179cfb.png)
 
+
+Usage Example
+------
+![dataregistrationexample](https://user-images.githubusercontent.com/37255664/53057356-ff933900-3513-11e9-8497-ac5bc5da5e18.png)
+_viewing data on the mesh with it's associated data and video. In this case the mesh has been created by fitting a 3d heart model to the video_
 
 Input Step
 ------
