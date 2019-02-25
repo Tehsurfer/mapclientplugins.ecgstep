@@ -193,9 +193,9 @@ class BlackfynnMesh(MeshAlignmentModel):
 
         nodePointAttr = nodePoints.getGraphicspointattributes()
         nodePointAttr.setGlyphShapeType(Glyph.SHAPE_TYPE_SPHERE)
-        nodePointAttr.setBaseSize([5, 5, 5])
-        # cmiss_number = fm.findFieldByName('cmiss_number')
-        # nodePointAttr.setLabelField(cmiss_number)
+        nodePointAttr.setBaseSize([.005, .005, .005])
+        cmiss_number = fm.findFieldByName('cmiss_number')
+        nodePointAttr.setLabelField(cmiss_number)
 
         surfaces = scene.createGraphicsSurfaces()
         surfaces.setCoordinateField(coordinates)

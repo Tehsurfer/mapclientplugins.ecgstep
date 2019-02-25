@@ -85,7 +85,9 @@ class BlackfynnDataModel(object):
 
         # TODO: categorise tabular data to find timescales
         # Note that the below assumes data is spaced in milliseconds!
-        timeseries_dframe =stored_dataset.get_data(int(length*1000))
+        number_of_samples_per_second = 1000
+        number_of_rows = int((length + self._extra_length)*number_of_samples_per_second)
+        timeseries_dframe =stored_dataset.get_data(number_of_rows)
 
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []
@@ -93,8 +95,8 @@ class BlackfynnDataModel(object):
             for time in absolute_timeseries_values:
                 relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6) - self._extra_length/2)
         else:
-            for time in absolute_timeseries_values:
-                relative_times.append(time - self._extra_length/2)
+            for time_sample in absolute_timeseries_values:
+                relative_times.append(time_sample/number_of_samples_per_second - self._extra_length/2)
 
         cache_output = self._create_file_cache(timeseries_dframe)
         return [cache_output, relative_times]

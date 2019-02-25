@@ -108,6 +108,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.blackfynnDatasets_comboBox.currentIndexChanged.connect(self._blackfynnDatasetsChanged)
         self._ui.downloadData_button.clicked.connect(self._downloadBlackfynnData)
         # self._ui.UploadToBlackfynn_button.clicked.connect(self._exportWebGLJsonToBlackfynn)
+        self._ui.lock_in_adjustment_pushButton.clicked.connect(self._lockInAdjustedData)
         self._ui.viewVideo_button.clicked.connect(self._playVideo)
         self._ui.adjustData_Slider.valueChanged.connect(self._adjustData)
         self._ui.tessellation_spinBox.valueChanged.connect(self._setTesselation)
@@ -168,6 +169,38 @@ class MeshGeneratorWidget(QtGui.QWidget):
         spectrum_component = spectrum.getFirstSpectrumcomponent()
         spectrum_component.setRangeMaximum(maximum)
         spectrum_component.setRangeMinimum(minimum)
+        
+    def _downsampledData(self):
+        # _downsampleData takes data from blackfynn and adjusts it to match the frequency of our exported mesh, 
+        #  which is defined in: self._time_sequence
+        
+        # create time sequence
+        video_time_sequence = []
+        for time_index, time_value in enumerate(self.data['times']):
+            # Only add data that to the mesh which is within the times of the video we will show
+            if time_value >= 0 and time_value <= self._model.video.videoLength:
+                video_time_sequence.append(time_value)
+        # find which indices we desire to downsample to
+        downsampling_indices = np.linspace(0, len(video_time_sequence), len(self._time_sequence)).round()
+        # downsample to our found indices and convert from dictionary to 2d array
+        downsampled_matrix = []
+        for key in self.data['cache']:
+            if 'time' not in key:
+                array_downsampled = []
+                array_values_in_video = []
+                for time_index, time_value in enumerate(self.data['times']):
+                    # Only add data that to the mesh which is within the times of the video we will show
+                    if time_value >= 0 and time_value <= self._model.video.videoLength:
+                        array_values_in_video.append(self.data['cache'][key][time_index])
+                # Loop through and pick out our downsampled indices
+                for index, val in enumerate(array_values_in_video):
+                    if index in downsampling_indices:
+                        array_downsampled.append(val)
+                # Add the final element
+                array_downsampled.append(array_values_in_video[-1])
+                # Add our array to the 2D matrix
+                downsampled_matrix.append(array_downsampled)
+        return downsampled_matrix
 
     def _renderECGMesh(self):
 
@@ -177,18 +210,10 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
             # prepare data
             self.initialiseSpectrum(self.data)
-            ecg_mmatrix = []
-            for key in self.data['cache']:
-                if 'time' not in key:
-                    # note that we downsample the data to get it to fit on web portal
-                    ecg_mmatrix.append(self.data['cache'][key][0::24])
-            for i in range(len(ecg_mmatrix)):
-                ecg_mmatrix[i].append(ecg_mmatrix[i][-1])
-
 
             # pass the created data dictionaries to the mesh model
             self._electrode_mesh.set_data_time_sequence(self._time_sequence)
-            self._electrode_mesh.set_data(ecg_mmatrix)
+            self._electrode_mesh.set_data(self._downsampledData())
 
         self._electrode_mesh.generate_mesh()
         self._electrode_mesh.drawMesh()
@@ -302,9 +327,16 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _adjustData(self):
         newOffset = self._ui.adjustData_Slider.value()/100
-        self.plot.adjustData(newOffset)
+        self.plot.nudgePlotStart(newOffset)
         self._model.video.line = self.plot.line
         self.data = self.plot.data
+
+    def _lockInAdjustedData(self):
+        newOffset = self._ui.adjustData_Slider.value()/100
+        self.data = self.plot.nudgeDataStart(newOffset)
+        self._renderECGMesh()
+
+
 
     def _refreshOptions(self):
         self._ui.framesPerSecond_spinBox.setValue(self._model.getFramesPerSecond())
@@ -324,67 +356,63 @@ class MeshGeneratorWidget(QtGui.QWidget):
         Export graphics into JSON formats. Returns an array containing the
         string buffers for each export
         """
+        downsample_rate = 100
 
-        try:
-            self.data
+        # Scale down our data (every 10th value) for exporting
+        ECGmatrix = []
+        for key in self.data['cache']:
+            ECGmatrix.append(self.data['cache'][key][0::downsample_rate])
+        for i in range(len(ECGmatrix)):
+            ECGmatrix[i].append(ECGmatrix[i][-1])
+        ECGtimes = np.linspace(self._time_sequence[0], self._time_sequence[-1], len(ECGmatrix[:][0]))
 
-            # Scale down our data (every 10th value) for exporting
-            ECGmatrix = []
-            for key in self.data['cache']:
-                ECGmatrix.append(self.data['cache'][key][0::100])
-            for i in range(len(ECGmatrix)):
-                ECGmatrix[i].append(ECGmatrix[i][-1])
-            ECGtimes = np.linspace(self._time_sequence[0], self._time_sequence[-1], len(ECGmatrix[:][0]))
+        # Set up our scene resource
+        ecg_region = self._model._region.findChildByName('ecg_plane')
+        scene = ecg_region.getScene()
+        sceneSR = scene.createStreaminformationScene()
+        sceneSR.setIOFormat(sceneSR.IO_FORMAT_THREEJS)
+        sceneSR.setInitialTime(ECGtimes[0])
+        sceneSR.setFinishTime(ECGtimes[-1])
+        sceneSR.setNumberOfTimeSteps(len(ECGtimes))
+        sceneSR.setOutputTimeDependentColours(1)
+        sceneSR.setOutputTimeDependentVertices(1)
 
-            # Set up our scene resource
-            ecg_region = self._model._region.findChildByName('ecg_plane')
-            scene = ecg_region.getScene()
-            sceneSR = scene.createStreaminformationScene()
-            sceneSR.setIOFormat(sceneSR.IO_FORMAT_THREEJS)
-            sceneSR.setInitialTime(ECGtimes[0])
-            sceneSR.setFinishTime(ECGtimes[-1])
-            sceneSR.setNumberOfTimeSteps(len(ECGtimes))
-            sceneSR.setOutputTimeDependentColours(1)
-            sceneSR.setOutputTimeDependentVertices(1)
+        # Get the total number of graphics in a scene/region that can be exported
+        number = sceneSR.getNumberOfResourcesRequired()
+        resources = []
+        # Write out each graphics into a json file which can be rendered with our
+        # WebGL script
+        for i in range(number):
+            resources.append(sceneSR.createStreamresourceMemory())
+        scene.write(sceneSR)
 
-            # Get the total number of graphics in a scene/region that can be exported
-            number = sceneSR.getNumberOfResourcesRequired()
-            resources = []
-            # Write out each graphics into a json file which can be rendered with our
-            # WebGL script
-            for i in range(number):
-                resources.append(sceneSR.createStreamresourceMemory())
-            scene.write(sceneSR)
+        # Store all the resources in a buffer
+        buffer = [resources[i].getBuffer()[1] for i in range(number)]
 
-            # Store all the resources in a buffer
-            buffer = [resources[i].getBuffer()[1] for i in range(number)]
+        mpbPath = self._export_directory
 
-            mpbPath = self._export_directory
-
-            # Write the files to directories for the MPB to read.
-            # Find it at https://github.com/Tehsurfer/MPB
-            heartPath = mpbPath
-            htmlIndexPath = mpbPath + '\simple_heart\\index.html'
-            for i, content in enumerate(buffer):
-                if content is None:
-                    break
-                if (i + 1) is 4:
-                    f2 = open(heartPath + 'picking_node_2.json', 'w')
-                    f2.write(content)
-                    f2.close()
-                if (i + 1) is 2:
-                    f2 = open(heartPath + 'ecgAnimation.json', 'w')
-                    f2.write(content)
-                    f2.close()
-                if (i + 1) is 3:
-                    f2 = open(heartPath + 'picking_node_3.json', 'w')
-                    f2.write(content)
-                    f2.close()
-                f = open(heartPath + '\webGLExport'+ str(i+1) + '.json', 'w') # for debugging
-                f.write(content)
-            webbrowser.open(htmlIndexPath)
-        except:
-            pass
+        # Write the files to directories for the MPB to read.
+        # Find it at https://github.com/Tehsurfer/MPB
+        heartPath = mpbPath
+        htmlIndexPath = mpbPath + '\simple_heart\\index.html'
+        for i, content in enumerate(buffer):
+            if content is None:
+                break
+            if (i + 1) is 4:
+                f2 = open(heartPath + 'picking_node_2.json', 'w')
+                f2.write(content)
+                f2.close()
+            if (i + 1) is 2:
+                f2 = open(heartPath + 'ecgAnimation.json', 'w')
+                f2.write(content)
+                f2.close()
+            if (i + 1) is 3:
+                f2 = open(heartPath + 'picking_node_3.json', 'w')
+                f2.write(content)
+                f2.close()
+            f = open(heartPath + '\webGLExport'+ str(i+1) + '.json', 'w') # for debugging
+            f.write(content)
+        webbrowser.open(htmlIndexPath)
 
     def _exportWebGLJsonToBlackfynn(self):
         '''
@@ -392,19 +420,16 @@ class MeshGeneratorWidget(QtGui.QWidget):
             the current model
             '''
 
-        try:
-            mpbPath = self._export_directory
+        mpbPath = self._export_directory
 
-            # Write the files to directories for the MPB to read.
-            # Find it at https://github.com/Tehsurfer/MPB
-            heartPath = mpbPath + '\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
-            htmlIndexPath = mpbPath + '\simple_heart\\index.html'
+        # Write the files to directories for the MPB to read.
+        # Find it at https://github.com/Tehsurfer/MPB
+        heartPath = mpbPath + '\simple_heart\models\organsViewerModels\cardiovascular\heart\\'
+        htmlIndexPath = mpbPath + '\simple_heart\\index.html'
 
-            self._blackfynn_data_model.uploadRender(heartPath + 'picking_node_2.json')
-            self._blackfynn_data_model.uploadRender(heartPath + 'ecgAnimation.json')
+        self._blackfynn_data_model.uploadRender(heartPath + 'picking_node_2.json')
+        self._blackfynn_data_model.uploadRender(heartPath + 'ecgAnimation.json')
 
-        except:
-            pass
 
 
     def _annotationItemChanged(self, item):

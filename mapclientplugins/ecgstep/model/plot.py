@@ -30,7 +30,7 @@ class Plot:
         self.line = self.pw.addLine(x=0, pen='r')
         self.datalen = max(data['times'])
 
-    def adjustData(self, value):
+    def nudgePlotStart(self, value):
         newTimes = []
         for i,val in enumerate(self.original_data['times']):
             newTimes.append(val+value)
@@ -40,3 +40,10 @@ class Plot:
                           self.data['cache'][next(iter(self.data['cache']))],
                           pen='b')
         self.line = self.pw.addLine(x=0, pen='r')
+
+    def nudgeDataStart(self, value):
+        newTimes = []
+        for i,val in enumerate(self.original_data['times']):
+            newTimes.append(val+value)
+        self.data['times'] = newTimes
+        return self.data

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ecgwidget.ui'
 #
-# Created: Wed Feb 20 12:44:27 2019
+# Created: Mon Feb 25 12:57:47 2019
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -110,8 +110,11 @@ class Ui_MeshGeneratorWidget(object):
         self.pushButton_3.setGeometry(QtCore.QRect(60, 170, 201, 24))
         self.pushButton_3.setObjectName("pushButton_3")
         self.viewVideo_button = QtGui.QPushButton(self.groupBox_2)
-        self.viewVideo_button.setGeometry(QtCore.QRect(180, 90, 121, 24))
+        self.viewVideo_button.setGeometry(QtCore.QRect(110, 80, 121, 21))
         self.viewVideo_button.setObjectName("viewVideo_button")
+        self.lock_in_adjustment_pushButton = QtGui.QPushButton(self.groupBox_2)
+        self.lock_in_adjustment_pushButton.setGeometry(QtCore.QRect(240, 80, 141, 21))
+        self.lock_in_adjustment_pushButton.setObjectName("lock_in_adjustment_pushButton")
         self.verticalLayout_3.addWidget(self.groupBox_2)
         self.video_groupBox = QtGui.QGroupBox(self.scrollAreaWidgetContents_2)
         self.video_groupBox.setObjectName("video_groupBox")
@@ -270,6 +273,7 @@ class Ui_MeshGeneratorWidget(object):
         self.label_4.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "-2s", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_3.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "View data with video", None, QtGui.QApplication.UnicodeUTF8))
         self.viewVideo_button.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "View Video", None, QtGui.QApplication.UnicodeUTF8))
+        self.lock_in_adjustment_pushButton.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Adjust mesh", None, QtGui.QApplication.UnicodeUTF8))
         self.video_groupBox.setTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Video:", None, QtGui.QApplication.UnicodeUTF8))
         self.framesPerSecond_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Frames per second:", None, QtGui.QApplication.UnicodeUTF8))
         self.frameIndex_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Frame index:", None, QtGui.QApplication.UnicodeUTF8))
