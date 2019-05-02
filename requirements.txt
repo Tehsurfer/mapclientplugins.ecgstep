@@ -1,4 +1,4 @@
-git+https://github.com/hsorby/blackfynn-python.git
+blackfynn
 pyqtgraph
 natsort
 opencv-python
