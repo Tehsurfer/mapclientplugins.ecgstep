@@ -17,6 +17,7 @@ class Video :
         self.numFrames = None
         self.videoLength = 0
         self.loadVideo(videoFilename)
+        self.fileName = videoFilename
         # self.playVideo()
 
     def playVideo(self):
@@ -24,6 +25,7 @@ class Video :
 
             self.updatePlot()
             time.sleep(1 / self.frameRate)
+        self.loadVideo(self.fileName)
         # inter = setInterval(1/self.frameRate,self.getNextFrame)
         # t = threading.Timer(18, inter.cancel())
         # t.start()

@@ -5,7 +5,7 @@
 
 from blackfynn import Blackfynn
 from natsort import natsorted
-
+import pandas as pd
 
 class BlackfynnDataModel(object):
 
@@ -70,6 +70,8 @@ class BlackfynnDataModel(object):
                     return  self.proecessTimeseriesData(stored_dataset, length)
                 if stored_dataset.type == 'Tabular':
                     return  self.proecessTabularData(stored_dataset, length)
+                if stored_dataset.type == 'CSV':
+                    return  self.quickBFHack(stored_dataset, length)
 
     def proecessTimeseriesData(self, stored_dataset, length):
         timeseries_dframe = stored_dataset.get_data(length='{0}s'.format(length + self._extra_length))
@@ -88,6 +90,26 @@ class BlackfynnDataModel(object):
         number_of_samples_per_second = 1000
         number_of_rows = int((length + self._extra_length)*number_of_samples_per_second)
         timeseries_dframe =stored_dataset.get_data(number_of_rows)
+
+        absolute_timeseries_values = timeseries_dframe.axes[0]
+        relative_times = []
+        if str(type(absolute_timeseries_values[0])) == "<class 'pandas._libs.tslibs.timestamps.Timestamp'>":
+            for time in absolute_timeseries_values:
+                relative_times.append(round(time.timestamp() - absolute_timeseries_values[0].timestamp(), 6) - self._extra_length/2)
+        else:
+            for time_sample in absolute_timeseries_values:
+                relative_times.append(time_sample/number_of_samples_per_second - self._extra_length/2)
+
+        cache_output = self._create_file_cache(timeseries_dframe)
+        return [cache_output, relative_times]
+
+    def quickBFHack(self, stored_dataset, length):
+
+        number_of_samples_per_second = 2000
+        number_of_rows = int((length + self._extra_length)*number_of_samples_per_second)
+        ts = pd.read_csv("C:\\Users\jkho021\Workspace\SPARC\P1760 IVC Occ Processed.csv")
+        del ts[ts.columns[0]]
+        timeseries_dframe = ts.head(number_of_rows)
 
         absolute_timeseries_values = timeseries_dframe.axes[0]
         relative_times = []

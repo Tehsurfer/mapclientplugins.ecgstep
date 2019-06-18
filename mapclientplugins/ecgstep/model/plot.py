@@ -25,7 +25,7 @@ class Plot:
         self.data = data
 
         self.pw = pg.plot(data['times'],
-                          data['cache'][next(iter(data['cache']))],
+                          data['cache']['26'],
                           pen='b')
         self.line = self.pw.addLine(x=0, pen='r')
         self.datalen = max(data['times'])
@@ -37,7 +37,7 @@ class Plot:
 
         self.pw.clear()
         self.pw.plot(newTimes,
-                          self.data['cache'][next(iter(self.data['cache']))],
+                          self.data['cache']['26'],
                           pen='b')
         self.line = self.pw.addLine(x=0, pen='r')
 

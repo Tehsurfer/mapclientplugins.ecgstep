@@ -116,7 +116,7 @@ class BlackfynnMesh(MeshAlignmentModel):
         zinc_data_time_sequence = field_module.getMatchingTimesequence(self._data_time_sequence)
         node_template.setTimesequence(colour, zinc_data_time_sequence)
 
-        first_node_number = 0
+        first_node_number = 1
 
         # create nodes
         cache = field_module.createFieldcache()
@@ -217,8 +217,14 @@ class BlackfynnMesh(MeshAlignmentModel):
         # Set attributes for our mesh
         surfaces.setSpectrum(spec)
         surfaces.setDataField(colour)
-        nodePoints.setSpectrum(spec)
-        nodePoints.setDataField(colour)
+        # nodePoints.setSpectrum(spec)
+        # nodePoints.setDataField(colour)
+
+        axes = scene.createGraphicsPoints()
+        pointattr = axes.getGraphicspointattributes()
+        pointattr.setGlyphShapeType(Glyph.SHAPE_TYPE_AXES_XYZ)
+        axesScale = 50
+        pointattr.setBaseSize([axesScale, axesScale, axesScale])
 
         # # Uncomment to be able to adjust tessellation
         # tessellationmodule = self._context.getTessellationmodule()
@@ -267,16 +273,33 @@ class BlackfynnMesh(MeshAlignmentModel):
 
 
 
-    def initialiseSpectrumFromDictionary(self, data):
-        min = data[next(iter(data))][0]
-        max = min
-        for key in data:
-            row_max = np.max(data[key])
-            row_min = np.min(data[key])
-            if row_min < min:
-                min = row_min
-            if row_max > max:
-                max = row_max
 
-        self._spectrum_component.setRangeMaximum(max)
-        self._spectrum_component.setRangeMinimum(min)
+
+    def initialiseSpectrumFromDictionary(self, data):
+        # min = data[next(iter(data))][0]
+        # max = min
+        # for key in data:
+        #     row_max = np.max(data[key])
+        #     row_min = np.min(data[key])
+        #     if row_min < min:
+        #         min = row_min
+        #     if row_max > max:
+        #         max = row_max
+        #
+        # max = int(max) # Fix bug where numpy int is having issues
+        # min = int(min)
+        # self._spectrum_component.setRangeMaximum(max)
+        # self._spectrum_component.setRangeMinimum(min)
+
+        scene = self._region.getScene()
+        spectrummodule = scene.getSpectrummodule()
+        spectrum = spectrummodule.getDefaultSpectrum()
+        scenefiltermodule = scene.getScenefiltermodule()
+        scenefilter = scenefiltermodule.getDefaultScenefilter()
+        spectrum.autorange(scene, scenefilter)
+
+
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]

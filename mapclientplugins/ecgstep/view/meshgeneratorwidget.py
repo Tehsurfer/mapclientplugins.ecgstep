@@ -156,42 +156,47 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def initialiseSpectrum(self, data):
         # initialiseSpectrum modifies the scale of the spectrum to match a set of data
 
-        maximum = -1000000
-        minimum = 1000000
-        for key in data['cache']:
-            array_max = max(data['cache'][key])
-            array_min = min(data['cache'][key])
-            maximum = max(array_max, maximum)
-            minimum = min(array_min, minimum)
-        scene = self._model._region.findChildByName('ecg_plane').getScene()
-        specMod = scene.getSpectrummodule()
-        spectrum = specMod.findSpectrumByName('eegColourSpectrum2')
-        spectrum_component = spectrum.getFirstSpectrumcomponent()
-        spectrum_component.setRangeMaximum(maximum)
-        spectrum_component.setRangeMinimum(minimum)
+        # maximum = -1000000
+        # minimum = 1000000
+        # for key in data['cache']:
+        #     array_max = max(data['cache'][key])
+        #     array_min = min(data['cache'][key])
+        #     maximum = max(array_max, maximum)
+        #     minimum = min(array_min, minimum)
+        # scene = self._model._region.findChildByName('ecg_plane').getScene()
+        # specMod = scene.getSpectrummodule()
+        # spectrum = specMod.findSpectrumByName('eegColourSpectrum2')
+        # spectrum_component = spectrum.getFirstSpectrumcomponent()
+        # spectrum_component.setRangeMaximum(maximum)
+        # spectrum_component.setRangeMinimum(minimum)
+
+        scene = self._model._region.getScene()
+        spectrummodule = scene.getSpectrummodule()
+        spectrum = spectrummodule.findSpectrumByName('eegColourSpectrum2')
+        scenefiltermodule = scene.getScenefiltermodule()
+        scenefilter = scenefiltermodule.getDefaultScenefilter()
+        spectrum.autorange(scene, scenefilter)
         
     def _downsampledData(self):
         # _downsampleData takes data from blackfynn and adjusts it to match the frequency of our exported mesh, 
         #  which is defined in: self._time_sequence
-        
+        print('starting downsample')
         # create time sequence
-        video_time_sequence = []
-        for time_index, time_value in enumerate(self.data['times']):
-            # Only add data that to the mesh which is within the times of the video we will show
-            if time_value >= 0 and time_value <= self._model.video.videoLength:
-                video_time_sequence.append(time_value)
+        video_time_sequence = [time_value for time_value in self.data['times'] if
+                               time_value >= 0 and time_value <= self._model.video.videoLength]
+
         # find which indices we desire to downsample to
-        downsampling_indices = np.linspace(0, len(video_time_sequence), len(self._time_sequence)).round()
+        downsampling_indices = np.linspace(0, len(video_time_sequence), len(self._time_sequence)).round().astype(int)
         # downsample to our found indices and convert from dictionary to 2d array
         downsampled_matrix = []
         for key in self.data['cache']:
             if 'time' not in key:
                 array_downsampled = []
-                array_values_in_video = []
-                for time_index, time_value in enumerate(self.data['times']):
-                    # Only add data that to the mesh which is within the times of the video we will show
-                    if time_value >= 0 and time_value <= self._model.video.videoLength:
-                        array_values_in_video.append(self.data['cache'][key][time_index])
+                # Only add data that to the mesh which is within the times of the video we will sh
+                array_values_in_video = [self.data['cache'][key][time_index] for time_index, time_value
+                                         in enumerate(self.data['times']) if
+                                         time_value >= 0 and time_value <= self._model.video.videoLength]
+
                 # Loop through and pick out our downsampled indices
                 for index, val in enumerate(array_values_in_video):
                     if index in downsampling_indices:
@@ -200,6 +205,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
                 array_downsampled.append(array_values_in_video[-1])
                 # Add our array to the 2D matrix
                 downsampled_matrix.append(array_downsampled)
+        print('finished downsample')
         return downsampled_matrix
 
     def _renderECGMesh(self):
