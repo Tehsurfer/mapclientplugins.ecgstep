@@ -8,24 +8,31 @@ from opencmiss.zinc.material import Material
 
 from mapclientplugins.ecgstep.model.blackfynndatamodel import BlackfynnDataModel
 from mapclientplugins.ecgstep.model.video import Video
-
+from mapclientplugins.ecgstep.model.imageplanemodel import ImagePlaneModel
+from mapclientplugins.ecgstep.model.imageplanescene import ImagePlaneScene
 class MasterModel(object):
 
-    def __init__(self, location, identifier, video_path):
+    def __init__(self, location, identifier, image_context_data):
         self._location = location
         self._identifier = identifier
         self._filenameStem = os.path.join(self._location, self._identifier)
-        self._context = Context("ecg")
+        self._context = Context('ecg')
         self._timekeeper = self._context.getTimekeepermodule().getDefaultTimekeeper()
         self._timer = QtCore.QTimer()
         self._current_time = 0.0
+        self._play_rate = 1
         self._timeValueUpdate = None
         self._frameIndexUpdate = None
         self._initialise()
         self._region = self._context.createRegion()
         self._blackfynn_data_model = BlackfynnDataModel()
+        video_path = image_context_data.get_video_path()
         self._video_path = video_path
-        self.video = Video(video_path, 30)
+        fps = image_context_data.get_frames_per_second()
+        self.video = Video(video_path, fps)
+        self._image_plane_model = ImagePlaneModel(self, video_path)
+        self._image_plane_scene = ImagePlaneScene(self)
+
         self._settings = {
             'frames-per-second': 30,
             'time-loop': False
@@ -70,12 +77,14 @@ class MasterModel(object):
         self._timer.timeout.connect(self._timeout)
 
     def _timeout(self):
-        self._current_time += 1000/self._settings['frames-per-second']/1000
+        self._current_time += 1000/self._settings['frames-per-second']/1000 * self._play_rate
         duration = self.video.numFrames / self._settings['frames-per-second']
         if self._settings['time-loop'] and self._current_time > duration:
             self._current_time -= duration
         self._timekeeper.setTime(self._scaleCurrentTimeToTimekeeperTime())
         self._timeValueUpdate(self._current_time)
+        frame_index = self._image_plane_model.get_frame_index_for_time(self._current_time)
+
 
     def _scaleCurrentTimeToTimekeeperTime(self):
         scaled_time = 0.0
@@ -103,11 +112,26 @@ class MasterModel(object):
     def getScene(self):
         return self._region.getScene()
 
+    def get_image_plane_scene(self):
+        return self._image_plane_scene
+
+    def get_image_plane_model(self):
+        return self._image_plane_model
+
     def getContext(self):
         return self._context
 
+    def get_context(self):
+        return self._context
+
+    def get_timekeeper(self):
+        return self._timekeeper
+
     def setTessellation(self,refinement_value):
         self._tess.setRefinementFactors(refinement_value)
+
+    def setPlayRate(self, play_rate):
+        self._play_rate = play_rate
 
     def setFrameIndex(self, frame_index):
         frame_value = frame_index - 1

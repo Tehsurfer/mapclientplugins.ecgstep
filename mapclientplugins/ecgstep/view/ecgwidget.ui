@@ -97,16 +97,7 @@
            </sizepolicy>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>0</number>
            </property>
            <item>
@@ -124,13 +115,6 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="2">
-                 <widget class="QCheckBox" name="timeLoop_checkBox">
-                  <property name="text">
-                   <string>Loop</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="0">
                  <widget class="QLabel" name="timeValue_label">
                   <property name="text">
@@ -142,6 +126,30 @@
                  <widget class="QPushButton" name="timePlayStop_pushButton">
                   <property name="text">
                    <string>Play</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QCheckBox" name="timeLoop_checkBox">
+                  <property name="text">
+                   <string>Loop</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="playRate">
+                  <property name="singleStep">
+                   <double>0.100000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>1.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label">
+                  <property name="text">
+                   <string>Play Rate:</string>
                   </property>
                  </widget>
                 </item>
@@ -252,6 +260,13 @@
                  <string>Adjust mesh</string>
                 </property>
                </widget>
+               <zorder>adjustData_Slider</zorder>
+               <zorder>label_3</zorder>
+               <zorder>label_4</zorder>
+               <zorder>pushButton_3</zorder>
+               <zorder>viewVideo_button</zorder>
+               <zorder>lock_in_adjustment_pushButton</zorder>
+               <zorder>time_groupBox</zorder>
               </widget>
              </item>
              <item>
@@ -289,8 +304,14 @@
                   <property name="minimum">
                    <number>1</number>
                   </property>
+                  <property name="maximum">
+                   <number>1000</number>
+                  </property>
+                  <property name="singleStep">
+                   <number>1</number>
+                  </property>
                   <property name="value">
-                   <number>25</number>
+                   <number>30</number>
                   </property>
                  </widget>
                 </item>
@@ -303,16 +324,7 @@
                    <enum>QFrame::Raised</enum>
                   </property>
                   <layout class="QHBoxLayout" name="horizontalLayout_4">
-                   <property name="leftMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="topMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="rightMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="bottomMargin">
+                   <property name="margin">
                     <number>0</number>
                    </property>
                    <item>
@@ -504,16 +516,7 @@
           <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <property name="leftMargin">
-           <number>3</number>
-          </property>
-          <property name="topMargin">
-           <number>3</number>
-          </property>
-          <property name="rightMargin">
-           <number>3</number>
-          </property>
-          <property name="bottomMargin">
+          <property name="margin">
            <number>3</number>
           </property>
           <item>

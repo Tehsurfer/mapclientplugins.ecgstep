@@ -35,7 +35,7 @@ class ecgStep(WorkflowStepMountPoint):
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#time_based_electrode_scaffold_positions'))
         self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#uses',
-                      'http://physiomeproject.org/workflow/1.0/rdf-schema#file_location'))
+                      'http://physiomeproject.org/workflow/1.0/rdf-schema#image_context_data'))
         self.addPort(('http://physiomeproject.org/workflow/1.0/rdf-schema#port',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#provides',
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#file_location'))
@@ -44,7 +44,7 @@ class ecgStep(WorkflowStepMountPoint):
                       'http://physiomeproject.org/workflow/1.0/rdf-schema#directory_location'))
         # Port data:
         self._portData0 = None  # time_based_electrode_scaffold_positions
-        self._portData1 = None  # video_file_location
+        self._portData1 = None  # Zinc image data context
         self._portData2 = None  # http://physiomeproject.org/workflow/1.0/rdf-schema#file_location
         self._portData3 = None  # directory_location
 

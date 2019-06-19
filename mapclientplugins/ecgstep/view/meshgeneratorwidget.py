@@ -24,11 +24,11 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def __init__(self, model, node_coordinates_data, export_directory, parent=None):
         super(MeshGeneratorWidget, self).__init__(parent)
         self._ui = Ui_MeshGeneratorWidget()
+        self._ui.setupUi(self)
         self._model = model
         self._model.registerTimeValueUpdateCallback(self._updateTimeValue)
         self._model.registerFrameIndexUpdateCallback(self._updateFrameIndex)
 
-        self._ui.setupUi(self)
         self._export_directory = export_directory
         self._doneCallback = None
         self._marker_mode_active = False
@@ -43,6 +43,9 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.sceneviewer_widget.setContext(model.getContext())
         self._ui.sceneviewer_widget.setModel(self._model)
         self._ui.sceneviewer_widget.initializeGL()
+        self._image_plane_scene = model.get_image_plane_scene()
+        self._image_plane_scene.create_graphics()
+        self._image_plane_scene.set_image_material()
         self._makeConnections()
 
         self.plot = None
@@ -112,6 +115,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.viewVideo_button.clicked.connect(self._playVideo)
         self._ui.adjustData_Slider.valueChanged.connect(self._adjustData)
         self._ui.tessellation_spinBox.valueChanged.connect(self._setTesselation)
+        self._ui.playRate.valueChanged.connect(self._setPlayRate)
 
     def _createFMAItem(self, parent, text, fma_id):
         item = QtGui.QTreeWidgetItem(parent)
@@ -259,6 +263,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
 
     def _framesPerSecondValueChanged(self, value):
         self._model.setFramesPerSecond(value)
+        self._model.video.frameRate = value
         self._ui.timeValue_doubleSpinBox.setMaximum(self._model.video.numFrames/value)
 
     def _addProfileClicked(self):
@@ -348,6 +353,9 @@ class MeshGeneratorWidget(QtGui.QWidget):
         self._ui.framesPerSecond_spinBox.setValue(self._model.getFramesPerSecond())
         self._ui.timeLoop_checkBox.setChecked(self._model.isTimeLoop())
         self._refreshBlackfynnOptions()
+
+    def _setPlayRate(self, value):
+        self._model.setPlayRate(value)
 
     def _exportDataJson(self):
         export_data = {'values': {}}

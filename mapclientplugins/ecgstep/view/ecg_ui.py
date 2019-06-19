@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ecgwidget.ui'
 #
-# Created: Mon Feb 25 12:57:47 2019
+# Created: Tue Jun 18 18:12:13 2019
 #      by: pyside-uic 0.2.15 running on PySide 1.2.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -78,15 +78,23 @@ class Ui_MeshGeneratorWidget(object):
         self.timeValue_doubleSpinBox.setMaximum(12000.0)
         self.timeValue_doubleSpinBox.setObjectName("timeValue_doubleSpinBox")
         self.gridLayout_4.addWidget(self.timeValue_doubleSpinBox, 0, 1, 1, 1)
-        self.timeLoop_checkBox = QtGui.QCheckBox(self.time_groupBox)
-        self.timeLoop_checkBox.setObjectName("timeLoop_checkBox")
-        self.gridLayout_4.addWidget(self.timeLoop_checkBox, 1, 2, 1, 1)
         self.timeValue_label = QtGui.QLabel(self.time_groupBox)
         self.timeValue_label.setObjectName("timeValue_label")
         self.gridLayout_4.addWidget(self.timeValue_label, 0, 0, 1, 1)
         self.timePlayStop_pushButton = QtGui.QPushButton(self.time_groupBox)
         self.timePlayStop_pushButton.setObjectName("timePlayStop_pushButton")
         self.gridLayout_4.addWidget(self.timePlayStop_pushButton, 1, 1, 1, 1)
+        self.timeLoop_checkBox = QtGui.QCheckBox(self.time_groupBox)
+        self.timeLoop_checkBox.setObjectName("timeLoop_checkBox")
+        self.gridLayout_4.addWidget(self.timeLoop_checkBox, 1, 2, 1, 1)
+        self.playRate = QtGui.QDoubleSpinBox(self.time_groupBox)
+        self.playRate.setSingleStep(0.1)
+        self.playRate.setProperty("value", 1.0)
+        self.playRate.setObjectName("playRate")
+        self.gridLayout_4.addWidget(self.playRate, 2, 1, 1, 1)
+        self.label = QtGui.QLabel(self.time_groupBox)
+        self.label.setObjectName("label")
+        self.gridLayout_4.addWidget(self.label, 2, 0, 1, 1)
         self.verticalLayout_3.addWidget(self.time_groupBox)
         self.groupBox_2 = QtGui.QGroupBox(self.scrollAreaWidgetContents_2)
         self.groupBox_2.setMaximumSize(QtCore.QSize(16777215, 234))
@@ -133,7 +141,9 @@ class Ui_MeshGeneratorWidget(object):
         self.gridLayout_2.addWidget(self.frameIndex_label, 0, 0, 1, 1)
         self.framesPerSecond_spinBox = QtGui.QSpinBox(self.video_groupBox)
         self.framesPerSecond_spinBox.setMinimum(1)
-        self.framesPerSecond_spinBox.setProperty("value", 25)
+        self.framesPerSecond_spinBox.setMaximum(1000)
+        self.framesPerSecond_spinBox.setSingleStep(1)
+        self.framesPerSecond_spinBox.setProperty("value", 30)
         self.framesPerSecond_spinBox.setObjectName("framesPerSecond_spinBox")
         self.gridLayout_2.addWidget(self.framesPerSecond_spinBox, 1, 1, 1, 1)
         self.numFrames_frame = QtGui.QFrame(self.video_groupBox)
@@ -265,9 +275,10 @@ class Ui_MeshGeneratorWidget(object):
         MeshGeneratorWidget.setWindowTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Mesh Generator", None, QtGui.QApplication.UnicodeUTF8))
         self.dockWidget.setWindowTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Control Panel", None, QtGui.QApplication.UnicodeUTF8))
         self.time_groupBox.setTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Time:", None, QtGui.QApplication.UnicodeUTF8))
-        self.timeLoop_checkBox.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Loop", None, QtGui.QApplication.UnicodeUTF8))
         self.timeValue_label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Time value:", None, QtGui.QApplication.UnicodeUTF8))
         self.timePlayStop_pushButton.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Play", None, QtGui.QApplication.UnicodeUTF8))
+        self.timeLoop_checkBox.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Loop", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Play Rate:", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox_2.setTitle(QtGui.QApplication.translate("MeshGeneratorWidget", "Adjust Data", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "+2s", None, QtGui.QApplication.UnicodeUTF8))
         self.label_4.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "-2s", None, QtGui.QApplication.UnicodeUTF8))
@@ -295,4 +306,3 @@ class Ui_MeshGeneratorWidget(object):
         self.done_button.setText(QtGui.QApplication.translate("MeshGeneratorWidget", "Done", None, QtGui.QApplication.UnicodeUTF8))
 
 from opencmiss.zincwidgets.alignmentsceneviewerwidget import AlignmentSceneviewerWidget
-# import resources_rc
