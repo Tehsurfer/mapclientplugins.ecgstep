@@ -18,18 +18,20 @@ class ImagePlaneModel(object):
         self._scaled_coordinate_field = None
         self._time_sequence = []
         self._video_path = video_path
+        self._image_scalar = .001 # constant to match size to model
 
         self._initialise()
 
     def _initialise(self):
-        child_region = self.create_model(self._master_model._region)
-        self._region = self._master_model._region.findChildByName('images')
+
         self.cap = cv2.VideoCapture(self._video_path)
         self._length = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self._frames_per_second = self.cap.get(cv2.CAP_PROP_FPS)
         flag, frame = self.cap.read()
         self._image_dimensions = [frame.shape[1], frame.shape[0]]
 
+        child_region = self.create_model(self._master_model._region)
+        self._region = self._master_model._region.findChildByName('images')
         self.creatZincFields(self._region, self._length, self._frames_per_second, self._image_dimensions)
 
         field_module = self._region.getFieldmodule()
@@ -58,8 +60,12 @@ class ImagePlaneModel(object):
         scaled_coordinate_field = field_module.createFieldAdd(scaled_coordinate_field, offset_field)
         scaled_coordinate_field.setManaged(True)
         scaled_coordinate_field.setName('scaled_coordinates')
+        vertical_height = self._image_dimensions[1]/self._image_dimensions[0]
         createSquare2DFiniteElement(field_module, coordinate_field,
-                                    [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.77], [1.0, 0.0, 1.77]])
+                                    [[0.0, 0.0, 0.0],
+                                     [1.0, 0.0, 0.0],
+                                     [0.0, 0.0, vertical_height],
+                                     [1.0, 0.0, vertical_height]])
 
         return region
 
@@ -69,9 +75,9 @@ class ImagePlaneModel(object):
         frame_count = num_frames
         # Assume all images have the same dimensions.
         width, height = image_dimension
-        scale = .001
         cache = field_module.createFieldcache()
         scale_field = field_module.findFieldByName('scale')
+        scale = self._image_scalar
         scale_field.assignReal(cache, [width*scale, height*scale, 1.0])
         duration = frame_count / frames_per_second
         duration_field = field_module.findFieldByName('duration')

@@ -30,6 +30,7 @@ class MasterModel(object):
         self._video_path = video_path
         fps = image_context_data.get_frames_per_second()
         self.video = Video(video_path, fps)
+        self.set_max_time(self.video.videoLength)
         self._image_plane_model = ImagePlaneModel(self, video_path)
         self._image_plane_scene = ImagePlaneScene(self)
 
@@ -81,9 +82,12 @@ class MasterModel(object):
         duration = self.video.numFrames / self._settings['frames-per-second']
         if self._settings['time-loop'] and self._current_time > duration:
             self._current_time -= duration
-        self._timekeeper.setTime(self._scaleCurrentTimeToTimekeeperTime())
+        self._timekeeper.setTime(self._current_time)
         self._timeValueUpdate(self._current_time)
         frame_index = self._image_plane_model.get_frame_index_for_time(self._current_time)
+
+    def set_max_time(self, max_time):
+        self._timekeeper.setMaximumTime(max_time)
 
 
     def _scaleCurrentTimeToTimekeeperTime(self):

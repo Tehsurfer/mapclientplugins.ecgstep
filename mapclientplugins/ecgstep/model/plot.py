@@ -4,6 +4,7 @@ import pyqtgraph as pg
 class Plot:
     def __init__(self, data):
         self.line = None
+        self.time = 0
         self.datalen = 1
         self.data = data
         self.plotData(data)
@@ -39,7 +40,7 @@ class Plot:
         self.pw.plot(newTimes,
                           self.data['cache']['26'],
                           pen='b')
-        self.line = self.pw.addLine(x=0, pen='r')
+        self.line = self.pw.addLine(x=self.time, pen='r')
 
     def nudgeDataStart(self, value):
         newTimes = []
@@ -47,3 +48,8 @@ class Plot:
             newTimes.append(val+value)
         self.data['times'] = newTimes
         return self.data
+
+    def updateTimeMarker(self, value):
+        self.time = value
+        if self.line is not None:
+            self.line.setValue(round(value,3))

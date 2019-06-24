@@ -23,7 +23,7 @@ class BlackfynnMesh(MeshAlignmentModel):
         self._mesh_group = []
         self._field_element_group = None
         self._coordinates = None
-        self._data_time_sequence = []
+        self._data_time_sequence = [] #Note that this is normally changed before loading mesh
         self._data = []
 
         ecg_region = region.findChildByName('ecg_plane')
@@ -32,8 +32,6 @@ class BlackfynnMesh(MeshAlignmentModel):
 
         self._region = region.createChild('ecg_plane')
         self._time_based_node_description = time_based_node_description
-
-        # Note that these are normally changed before generating the mesh
 
     def set_data_time_sequence(self, data_time_sequence):
         self._data_time_sequence = data_time_sequence

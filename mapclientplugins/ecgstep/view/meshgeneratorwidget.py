@@ -152,8 +152,7 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self._timePlayStopClicked()
         else:
             self._ui.timeValue_doubleSpinBox.setValue(value)
-            if self.plot.line is not None:
-                self.plot.line.setValue(round(value, 3)) # adjust time marker
+            self.plot.updateTimeMarker(value) # adjust time marker
 
         self._ui.timeValue_doubleSpinBox.blockSignals(False)
 
@@ -184,32 +183,26 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def _downsampledData(self):
         # _downsampleData takes data from blackfynn and adjusts it to match the frequency of our exported mesh, 
         #  which is defined in: self._time_sequence
+        import time
+        start = time.time()
         print('starting downsample')
         # create time sequence
-        video_time_sequence = [time_value for time_value in self.data['times'] if
-                               time_value >= 0 and time_value <= self._model.video.videoLength]
+        ind_in_video = np.array([[i, t] for i, t in enumerate(self.data['times']) if
+                               t >= 0 and t < self._model.video.videoLength])
+        self._time_sequence = ind_in_video[:, 1].tolist()
 
-        # find which indices we desire to downsample to
-        downsampling_indices = np.linspace(0, len(video_time_sequence), len(self._time_sequence)).round().astype(int)
         # downsample to our found indices and convert from dictionary to 2d array
         downsampled_matrix = []
         for key in self.data['cache']:
             if 'time' not in key:
-                array_downsampled = []
                 # Only add data that to the mesh which is within the times of the video we will sh
-                array_values_in_video = [self.data['cache'][key][time_index] for time_index, time_value
-                                         in enumerate(self.data['times']) if
-                                         time_value >= 0 and time_value <= self._model.video.videoLength]
 
-                # Loop through and pick out our downsampled indices
-                for index, val in enumerate(array_values_in_video):
-                    if index in downsampling_indices:
-                        array_downsampled.append(val)
+                array_in_video = np.array(self.data['cache'][key])[ind_in_video[:, 0].astype(int)].tolist()
                 # Add the final element
-                array_downsampled.append(array_values_in_video[-1])
+                array_in_video.append(array_in_video[-1])
                 # Add our array to the 2D matrix
-                downsampled_matrix.append(array_downsampled)
-        print('finished downsample')
+                downsampled_matrix.append(array_in_video)
+        print(f'finished downsample. Took: {time.time() - start}s')
         return downsampled_matrix
 
     def _renderECGMesh(self):
@@ -222,8 +215,8 @@ class MeshGeneratorWidget(QtGui.QWidget):
             self.initialiseSpectrum(self.data)
 
             # pass the created data dictionaries to the mesh model
-            self._electrode_mesh.set_data_time_sequence(self._time_sequence)
             self._electrode_mesh.set_data(self._downsampledData())
+            self._electrode_mesh.set_data_time_sequence(self._time_sequence)
 
         self._electrode_mesh.generate_mesh()
         self._electrode_mesh.drawMesh()
@@ -319,7 +312,6 @@ class MeshGeneratorWidget(QtGui.QWidget):
             valid_datasets = True
 
         self._ui.blackfynnTimeSeries_pushButton.setEnabled(valid_datasets)
-        self._ui.blackfynnTimeSeries_pushButton.setEnabled(valid_datasets)
 
     def _refreshBlackfynnOptions(self):
         self._ui.profiles_comboBox.clear()
@@ -345,7 +337,9 @@ class MeshGeneratorWidget(QtGui.QWidget):
     def _lockInAdjustedData(self):
         newOffset = self._ui.adjustData_Slider.value()/100
         self.data = self.plot.nudgeDataStart(newOffset)
+        self._ui.adjustData_Slider.setValue(0) # reset slider
         self._renderECGMesh()
+
 
 
 

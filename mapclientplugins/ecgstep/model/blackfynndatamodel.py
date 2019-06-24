@@ -87,7 +87,7 @@ class BlackfynnDataModel(object):
 
         # TODO: categorise tabular data to find timescales
         # Note that the below assumes data is spaced in milliseconds!
-        number_of_samples_per_second = 2000
+        number_of_samples_per_second = 1000
         number_of_rows = int((length + self._extra_length)*number_of_samples_per_second)
         timeseries_dframe =stored_dataset.get_data(number_of_rows)
 
